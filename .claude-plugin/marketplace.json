@@ -8,20 +8,43 @@
   "description": "Claude Code plugins maintained by clayboby. Every plugin reads its endpoints and credentials from userConfig at install time, so no address or token of a private deployment is ever published here.",
   "plugins": [
     {
+      "name": "vagaa-media",
+      "displayName": "Vagaa Media",
+      "source": "./plugins/vagaa-media",
+      "description": "Produce video, images, music, speech and translations through your own media gateway, with an asset library, a vision review gate and a storyboard pipeline for long video.",
+      "version": "0.2.0",
+      "author": { "name": "clayboby", "url": "https://github.com/clayboby" },
+      "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-media",
+      "repository": "https://github.com/clayboby/claude-kit",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": ["mcp", "media", "video", "image", "music", "tts", "storyboard"]
+    },
+    {
+      "name": "vagaa-web-evidence",
+      "displayName": "Vagaa Web Evidence",
+      "source": "./plugins/vagaa-web-evidence",
+      "description": "Free-first public-web search and page extraction through your own evidence router: one call per turn, citations only from extracted bodies, no paid provider without asking.",
+      "version": "0.2.0",
+      "author": { "name": "clayboby", "url": "https://github.com/clayboby" },
+      "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-web-evidence",
+      "repository": "https://github.com/clayboby/claude-kit",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": ["mcp", "web-search", "extraction", "evidence", "research"]
+    },
+    {
       "name": "vagaa-dgx",
       "displayName": "Vagaa DGX",
       "source": "./plugins/vagaa-dgx",
-      "description": "Media production (video, image, music, speech, translation, asset library) and free-first web evidence, over two self-hosted MCP gateways you point the plugin at.",
-      "version": "0.1.0",
-      "author": {
-        "name": "clayboby",
-        "url": "https://github.com/clayboby"
-      },
+      "description": "Bundle: installs vagaa-media and vagaa-web-evidence together. Ships no components of its own.",
+      "version": "0.2.0",
+      "author": { "name": "clayboby", "url": "https://github.com/clayboby" },
       "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-dgx",
       "repository": "https://github.com/clayboby/claude-kit",
       "license": "MIT",
       "category": "productivity",
-      "keywords": ["mcp", "media", "video", "image", "tts", "web-search", "evidence"]
+      "keywords": ["bundle", "mcp", "media", "web-search"]
     }
   ]
 }
