@@ -43,7 +43,7 @@ fill in at install time; the token is `sensitive`, so Claude Code stores it in y
 |---|---|---|---|
 | `media_mcp_url` | string, required | `https://media.example.com/mcp` | Streamable-HTTP MCP endpoint. Also the only origin the asset-link hook will relay a URL from |
 | `media_mcp_token` | string, required, **sensitive** | — | Bearer token. Prefer a short-lived token scoped to the capabilities you actually use |
-| `surface` | string, default `compact` | `standard` | Which surface the URL points at. Documentation and a session-start note only — it never rewrites the URL. With media-mcp 0.3.5, set `standard` |
+| `surface` | string, default `standard` | `compact` | Which surface the URL points at. Documentation and a session-start note only — it never rewrites the URL. media-mcp 0.3.x serves only the standard surface; set `compact` once 0.5 ships `/mcp-compact` |
 
 The URL becomes the MCP server's `url` and the token its `Authorization: Bearer …` header. Nothing
 else is sent. Tools appear as `mcp__plugin_vagaa-media_media__<tool>`.

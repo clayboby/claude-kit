@@ -29,7 +29,7 @@
       "type": "string",
       "title": "Tool surface",
       "description": "Which tool surface the URL above points at: standard (one tool per operation) or compact (a few aggregate tools). Documentation and a session-start sanity check only — it does not rewrite the URL. Allowed values: standard, compact.",
-      "default": "compact",
+      "default": "standard",
       "required": false
     }
   }

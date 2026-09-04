@@ -38,7 +38,7 @@ them later. Every value stays on your machine.
 |---|---|---|---|
 | `media_mcp_url` | yes | `https://media.example.com/mcp` | Streamable-HTTP MCP endpoint of your media gateway. Also the only origin the asset-link hook will relay a URL from |
 | `media_mcp_token` | yes, sensitive | — | Bearer token for the gateway |
-| `surface` | no, default `compact` | `standard` | Which tool surface the URL points at. Documentation and a session-start note only. media-mcp 0.3.5 serves only the standard surface — set `standard` until 0.5 ships `/mcp-compact` |
+| `surface` | no, default `standard` | `compact` | Which tool surface the URL points at. Documentation and a session-start note only. media-mcp 0.3.x serves only the standard surface; set `compact` once 0.5 ships `/mcp-compact` |
 
 ### vagaa-web-evidence
 
