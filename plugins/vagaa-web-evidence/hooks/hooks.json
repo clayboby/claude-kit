@@ -1,0 +1,17 @@
+{
+  "description": "Checks at session start that the configured web-evidence router is reachable and that the configured credential is accepted.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/preflight.sh"],
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

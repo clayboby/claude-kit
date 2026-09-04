@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SessionStart hook for vagaa-media.
+# SessionStart hook for vagaa-web-evidence.
 #
 # Two probes, 3s each, both unauthenticated-safe to fail:
 #   1. the gateway's health path, derived from the configured MCP URL;
@@ -14,26 +14,25 @@
 set -euo pipefail
 
 TIMEOUT_S=3
-LABEL="media gateway"
-URL="${CLAUDE_PLUGIN_OPTION_MEDIA_MCP_URL:-}"
-SURFACE="${CLAUDE_PLUGIN_OPTION_SURFACE:-compact}"
+LABEL="web-evidence router"
+URL="${CLAUDE_PLUGIN_OPTION_NOLE_MCP_URL:-}"
+PROFILE="${CLAUDE_PLUGIN_OPTION_PROFILE:-}"
 
-say() { printf '[vagaa-media] %s\n' "$1"; }
+say() { printf '[vagaa-web-evidence] %s\n' "$1"; }
 
 if [ -z "$URL" ]; then
-  say "${LABEL}: not configured — run /plugin, open vagaa-media and fill in its options."
+  say "${LABEL}: not configured — run /plugin, open vagaa-web-evidence and fill in its options."
   exit 0
 fi
 case "$URL" in
   http://*|https://*) ;;
   *)
-    say "${LABEL}: the configured URL is not http(s) — run /plugin and fix media_mcp_url."
+    say "${LABEL}: the configured URL is not http(s) — run /plugin and fix nole_mcp_url."
     exit 0
     ;;
 esac
 
 base="${URL%/}"
-path_tail="${base##*/}"
 base="${base%/mcp-compact}"
 base="${base%/mcp}"
 
@@ -50,9 +49,9 @@ http_code() {
   printf '%s' "$code"
 }
 
-health="$(http_code "${base}/healthz")"
+health="$(http_code "${base}/health")"
 if [ "$health" = "404" ]; then
-  health="$(http_code "${base}/health")"
+  health="$(http_code "${base}/healthz")"
 fi
 case "$health" in
   2*) ;;
@@ -70,7 +69,7 @@ esac
 # does not show up in `ps`. printf is a bash builtin, so the value is not in an
 # argv of its own either. Nothing is written to disk.
 probe_body='{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
-token="${CLAUDE_PLUGIN_OPTION_MEDIA_MCP_TOKEN:-}"
+token="${CLAUDE_PLUGIN_OPTION_NOLE_CREDENTIAL:-}"
 esc_url="${URL//\\/\\\\}"; esc_url="${esc_url//\"/\\\"}"
 esc_token="${token//\\/\\\\}"; esc_token="${esc_token//\"/\\\"}"
 esc_body="${probe_body//\\/\\\\}"; esc_body="${esc_body//\"/\\\"}"
@@ -143,24 +142,30 @@ case "$verdict" in
     say "${LABEL}: the MCP endpoint did not answer in ${TIMEOUT_S}s even though its health path did — the service may be starting or a proxy is in the way."
     ;;
   unauthorized)
-    say "${LABEL}: rejected the configured token (HTTP 401/403) — it is wrong, expired or revoked, or lacks the scopes for this surface; run /plugin and update media_mcp_token."
+    say "${LABEL}: rejected the configured credential (HTTP 401/403). 直连填服务令牌,公网填网关密钥,不可互换 — with profile=lan nole_credential must be the router service token, with profile=public the gateway API key; run /plugin and update it."
     ;;
   notfound)
-    say "${LABEL}: no MCP endpoint at the configured URL (HTTP 404) — check that media_mcp_url ends in /mcp or /mcp-compact."
+    say "${LABEL}: no MCP endpoint at the configured URL (HTTP 404) — check that nole_mcp_url ends in /mcp-compact (one tool) or /mcp (six tools)."
     ;;
   *)
-    say "${LABEL}: answered, but not with MCP JSON-RPC — media_mcp_url probably points at a proxy, a web page or the wrong path."
+    say "${LABEL}: answered, but not with MCP JSON-RPC — nole_mcp_url probably points at the REST API, a proxy or the wrong path."
     ;;
 esac
 
-# --- 3. surface sanity note ------------------------------------------------
+# --- 3. profile sanity note ------------------------------------------------
 if [ "$verdict" = "ok" ]; then
-  case "$SURFACE:$path_tail" in
-    standard:mcp-compact)
-      say "note: surface is set to standard but the URL ends in /mcp-compact. Set surface=compact, or point media_mcp_url at /mcp."
+  case "$PROFILE" in
+    lan|public) ;;
+    "")
+      say "note: profile is not set. Set it to lan (direct address, router service token) or public (gateway address, gateway API key) so this check can name the right credential."
       ;;
-    compact:mcp)
-      say "note: surface is set to compact but the URL ends in /mcp, which is the standard surface. Set surface=standard, or point media_mcp_url at /mcp-compact."
+    *)
+      say "note: profile is neither lan nor public — set one of those two values."
+      ;;
+  esac
+  case "$PROFILE:$URL" in
+    public:http://*)
+      say "note: profile is public but the URL is plain http — a gateway address should be https."
       ;;
   esac
 fi
