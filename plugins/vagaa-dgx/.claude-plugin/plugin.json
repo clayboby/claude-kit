@@ -1,0 +1,58 @@
+{
+  "name": "vagaa-dgx",
+  "displayName": "Vagaa DGX",
+  "version": "0.1.0",
+  "description": "Media production (video, image, music, speech, translation, asset library) and free-first web evidence for Claude Code, over two self-hosted MCP gateways you point the plugin at.",
+  "author": {
+    "name": "clayboby",
+    "url": "https://github.com/clayboby"
+  },
+  "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-dgx",
+  "repository": "https://github.com/clayboby/claude-kit",
+  "license": "MIT",
+  "keywords": ["mcp", "media", "video", "image", "tts", "web-search", "evidence"],
+  "userConfig": {
+    "media_mcp_url": {
+      "type": "string",
+      "title": "Media gateway MCP URL",
+      "description": "Streamable-HTTP MCP endpoint of your media gateway, ending in /mcp. Example: https://media.example.com/mcp",
+      "required": true
+    },
+    "media_mcp_token": {
+      "type": "string",
+      "title": "Media gateway token",
+      "description": "Bearer token for the media gateway. Stored in your OS keychain, never written to the repository.",
+      "sensitive": true,
+      "required": true
+    },
+    "nole_mcp_url": {
+      "type": "string",
+      "title": "Web-evidence MCP URL",
+      "description": "Streamable-HTTP MCP endpoint of your web-evidence router. Use the compact surface (/mcp-compact, one tool) unless you want the six-tool surface (/mcp). Example: https://search.example.com/mcp-compact",
+      "required": true
+    },
+    "nole_token": {
+      "type": "string",
+      "title": "Web-evidence token",
+      "description": "Bearer token for the web-evidence router. This is a different secret from the media gateway token. Stored in your OS keychain.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "mcpServers": {
+    "media": {
+      "type": "http",
+      "url": "${user_config.media_mcp_url}",
+      "headers": {
+        "Authorization": "Bearer ${user_config.media_mcp_token}"
+      }
+    },
+    "web-evidence": {
+      "type": "http",
+      "url": "${user_config.nole_mcp_url}",
+      "headers": {
+        "Authorization": "Bearer ${user_config.nole_token}"
+      }
+    }
+  }
+}
