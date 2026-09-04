@@ -1,0 +1,35 @@
+{
+  "name": "vagaa-web-evidence",
+  "displayName": "Vagaa Web Evidence",
+  "version": "0.2.0",
+  "description": "Free-first public-web search and page extraction through your own evidence router: one call per turn, citations only from extracted bodies, no paid provider without asking.",
+  "author": {
+    "name": "clayboby",
+    "url": "https://github.com/clayboby"
+  },
+  "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-web-evidence",
+  "repository": "https://github.com/clayboby/claude-kit",
+  "license": "MIT",
+  "keywords": ["mcp", "web-search", "extraction", "evidence", "research"],
+  "userConfig": {
+    "nole_mcp_url": {
+      "type": "string",
+      "title": "Web-evidence MCP URL",
+      "description": "Streamable-HTTP MCP endpoint of your evidence router. Compact surface (one tool): https://search.example.com/mcp-compact — standard surface (six tools): https://search.example.com/mcp. Must agree with the profile below.",
+      "required": true
+    },
+    "nole_credential": {
+      "type": "string",
+      "title": "Web-evidence credential",
+      "description": "直连填服务令牌,公网填网关密钥,不可互换. With profile=lan this is the router's own service token; with profile=public it is the gateway's external API key. The two are different secrets: sending one to the other address does not authenticate. Stored in your OS keychain.",
+      "sensitive": true,
+      "required": true
+    },
+    "profile": {
+      "type": "string",
+      "title": "Connection profile",
+      "description": "Which address the URL above is: lan (direct to the router, its own service token) or public (through the gateway, the gateway's API key). Picks the wording of the session-start check and nothing else. Allowed values: lan, public.",
+      "required": true
+    }
+  }
+}

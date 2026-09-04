@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "media": {
+      "type": "http",
+      "url": "${user_config.media_mcp_url}",
+      "headers": {
+        "Authorization": "Bearer ${user_config.media_mcp_token}"
+      }
+    }
+  }
+}

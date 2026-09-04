@@ -17,7 +17,7 @@ Report how much free provider quota is left on the web-evidence router.
    surface (`/mcp-compact`), which exposes exactly one tool by design so chat models stop calling
    three near-synonyms per turn. `budget_status` is not reachable from there. Say that plainly, and
    give the two ways out:
-   - run `/plugin`, open vagaa-dgx, and change `nole_mcp_url` from `.../mcp-compact` to `.../mcp` to
+   - run `/plugin`, open vagaa-web-evidence, and change `nole_mcp_url` from `.../mcp-compact` to `.../mcp` to
      get the six-tool surface (this also re-exposes `search`, `extract`, `search_and_extract`,
      `research` and `provider_status`, which is exactly the confusion the compact surface avoids —
      so switch back afterwards if the one-tool discipline is what you want); or

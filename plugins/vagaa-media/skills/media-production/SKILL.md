@@ -6,7 +6,7 @@ description: How to produce video, image, music, speech and translation assets t
 # Media production through the media gateway
 
 All media generation goes through this plugin's `media` MCP server. Its tools appear in the
-session as `mcp__plugin_vagaa-dgx_media__<tool>`; this document calls them by their bare names:
+session as `mcp__plugin_vagaa-media_media__<tool>`; this document calls them by their bare names:
 
 `video_submit` / `video_status` / `video_fetch`, `image_submit` / `image_status` / `image_fetch`,
 `music_submit` / `music_status` / `music_fetch`, `workflow_submit` / `workflow_status` /

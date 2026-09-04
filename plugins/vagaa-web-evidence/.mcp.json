@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "web-evidence": {
+      "type": "http",
+      "url": "${user_config.nole_mcp_url}",
+      "headers": {
+        "Authorization": "Bearer ${user_config.nole_credential}"
+      }
+    }
+  }
+}

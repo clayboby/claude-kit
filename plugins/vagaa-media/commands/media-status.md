@@ -23,4 +23,4 @@ Call the media gateway's `jobs_list` tool and report what is in flight.
    reads status once.
 
 If the tool is missing from the session, the plugin's `media` server is not connected: tell the user
-to run `/plugin` to check the vagaa-dgx options, or `/mcp` to reconnect, and stop there.
+to run `/plugin` to check the vagaa-media options, or `/mcp` to reconnect, and stop there.

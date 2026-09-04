@@ -6,7 +6,7 @@ description: When and how to call the web_evidence tool for live web facts, page
 # Web evidence (one tool, one call per turn)
 
 This plugin's `web-evidence` MCP server exposes a single tool, `web_evidence` (in the session:
-`mcp__plugin_vagaa-dgx_web-evidence__web_evidence`). It is a free-first router in front of several
+`mcp__plugin_vagaa-web-evidence_web-evidence__web_evidence`). It is a free-first router in front of several
 search and extraction providers, with a quota ledger, circuit breakers and a content-safety pass.
 One tool exists on purpose: models faced with `web_search`, `search_web`, `extract` and `research`
 call two or three near-synonyms per turn and burn the shared free tier.

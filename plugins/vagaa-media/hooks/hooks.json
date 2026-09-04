@@ -14,7 +14,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "mcp__plugin_vagaa-dgx_media__(video_fetch|image_fetch|music_fetch|storyboard_fetch)",
+        "matcher": "mcp__plugin_vagaa-media_media__(video_fetch|image_fetch|music_fetch|storyboard_fetch)",
         "hooks": [
           {
             "type": "command",
