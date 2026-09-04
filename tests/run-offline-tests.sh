@@ -167,12 +167,25 @@ expect_eq "anchored matcher hits exactly the four fetch tools" "clean" "$matches
 # --------------------------------------------------------------------------
 echo
 echo "SessionStart preflight"
-python3 "$REPO/tests/stub_gateway.py" 60 &
+if curl -s -o /dev/null --max-time 1 "$STUB/ok/healthz"; then
+  echo "  something is already listening on ${STUB_PORT}; stop it and re-run" >&2
+  exit 1
+fi
+python3 "$REPO/tests/stub_gateway.py" 120 &
 stub_pid=$!
 trap 'kill "$stub_pid" 2>/dev/null || true' EXIT
-for _ in 1 2 3 4 5 6 7 8 9 10; do
-  if curl -s -o /dev/null --max-time 1 "$STUB/ok/healthz"; then break; fi
+stub_up=""
+for _ in $(seq 1 50); do
+  if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 1 "$STUB/ok/healthz")" = "200" ]; then
+    stub_up=yes
+    break
+  fi
+  sleep 0.2
 done
+if [ -z "$stub_up" ]; then
+  echo "  stub gateway did not start on ${STUB_PORT}" >&2
+  exit 1
+fi
 
 media_pre() { # $1 stub path, $2 surface
   CLAUDE_PLUGIN_OPTION_MEDIA_MCP_URL="$STUB/$1/mcp" \
