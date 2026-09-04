@@ -1,0 +1,27 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "claude-kit",
+  "owner": {
+    "name": "clayboby",
+    "url": "https://github.com/clayboby"
+  },
+  "description": "Claude Code plugins maintained by clayboby. Every plugin reads its endpoints and credentials from userConfig at install time, so no address or token of a private deployment is ever published here.",
+  "plugins": [
+    {
+      "name": "vagaa-dgx",
+      "displayName": "Vagaa DGX",
+      "source": "./plugins/vagaa-dgx",
+      "description": "Media production (video, image, music, speech, translation, asset library) and free-first web evidence, over two self-hosted MCP gateways you point the plugin at.",
+      "version": "0.1.0",
+      "author": {
+        "name": "clayboby",
+        "url": "https://github.com/clayboby"
+      },
+      "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-dgx",
+      "repository": "https://github.com/clayboby/claude-kit",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": ["mcp", "media", "video", "image", "tts", "web-search", "evidence"]
+    }
+  ]
+}
