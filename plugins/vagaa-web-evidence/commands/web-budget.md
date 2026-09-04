@@ -1,6 +1,7 @@
 ---
 name: web-budget
 description: Report the web-evidence router's provider quota and budget, or explain why the compact surface cannot
+disable-model-invocation: true
 ---
 
 # Web-evidence budget

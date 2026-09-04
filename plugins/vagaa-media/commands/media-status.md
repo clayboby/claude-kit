@@ -1,6 +1,7 @@
 ---
 name: media-status
 description: List recent media-gateway jobs and say which ones still need fetching
+disable-model-invocation: true
 ---
 
 # Recent media jobs
