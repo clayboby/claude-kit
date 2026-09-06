@@ -1,12 +1,12 @@
 ---
 name: media-production
 description: How to produce video, image, speech and translation assets on the ZhenBS DGX cluster through the media-mcp tools (H3 video, Krea images, Qwen3-TTS speech, Hy-MT2 translation, Qwen3.8 visual review, asset library). Use whenever a task needs generated media.
-verified_against: media-mcp 0.4.10 (2026-09-06)
+verified_against: media-mcp 0.5.0 (2026-09-06)
 ---
 
 # Media production on the cluster (media-mcp)
 
-All media generation goes through the `media-mcp` MCP server (tools: `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `workflow_submit`/`workflow_status`/`workflow_fetch`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search`/`asset_get`/`asset_tag`, `storyboard_plan`/`storyboard_plan_get`/`storyboard_plan_update`/`storyboard_run`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `jobs_list`, `job_recover`). Text/code chat does not go through it. If a tool listed here is missing from the session (new tools since the last connect), ask the user to run `/mcp` and reconnect `media-mcp` before working around it.
+All media generation goes through the `media-mcp` MCP server (tools: `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `workflow_submit`/`workflow_status`/`workflow_fetch`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search`/`asset_get`/`asset_tag`, `storyboard_plan`/`storyboard_plan_get`/`storyboard_plan_update`/`storyboard_run`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `jobs_list`, `job_recover`; cloud-only since 0.5.0, present only when the matching cloud entry is enabled: `voice_enroll`, `compliance_review`/`compliance_status`, `lipsync`). Text/code chat does not go through it. If a tool listed here is missing from the session (new tools since the last connect), ask the user to run `/mcp` and reconnect `media-mcp` before working around it.
 
 ## Search the library before generating (media-mcp ≥ 0.2.0)
 
@@ -29,7 +29,7 @@ Every completed job is copied to MinIO and indexed automatically (prompt, seed, 
 ## The loop: draft → review → final
 
 1. **Draft cheaply.** `video_submit(prompt, preset="draft", seconds=5, seed=<fixed>)` (5 s is the default since 2026-09-06 and matches a storyboard shot; 4–15 s accepted, time is roughly linear: 5 s ≈ 2 min, 15 s ≈ 9 min on the lottery node). Draft is 832×480 + Turbo 8 steps; it lands on spark-03 `comfy2` first, overflow to spark-04 `comfy`. `video_status.progress` stays null on the ComfyUI lane — poll every 20–30 s and expect ~2 min for 5 s, do not read null as "stuck". Submit several drafts (different seeds or prompt variants) back to back; they queue.
-2. **Review, don't eyeball.** `video_review(job_id)` / `image_review(job_id)` returns a 5-axis score (prompt match, composition, artifacts, style, usability) plus one improvement hint from the cluster's Qwen3.8 vision model (`qwen38-flash-next-nvfp4`, the `vision` backend; `overall` is 1.0–5.0 with one decimal). `reverse_prompt` is the only tool that prefers Qwen3.6. Iterate on the prompt until the review passes the bar you set.
+2. **Review, don't eyeball.** `video_review(job_id)` / `image_review(job_id)` returns a 5-axis score (prompt match, composition, artifacts, style, usability) plus one improvement hint from the cluster's Qwen3.8 vision model (`qwen38-flash-next-nvfp4`, the `vision` backend; `overall` is 1.0–5.0 with one decimal). `reverse_prompt` uses the same vision lane. Iterate on the prompt until the review passes the bar you set.
 3. **Final with the same seed.** Re-submit the approved prompt with the **same seed** using `preset="fast"` (1344×768 Turbo 8 steps, ~5 min per 4 s, ~40 min per 15 s; everyday deliverable) or `preset="quality"` (1344×768 Base 20 steps, ~11 min per 4 s). `daily` = Base 8 steps without the Turbo look (~5 min per 4 s, ~36 min per 15 s).
 4. **Fetch.** `video_fetch(job_id)` returns the presigned URL (24 h) plus `asset_id` and the stable `asset_url`; the copy to MinIO already happened on completion. Hand the stable URL on; do not re-fetch in a loop.
 
@@ -37,9 +37,9 @@ Never iterate prompts on `quality`. Never submit `quality` for more than one can
 
 ## H3 video facts (MiniMax-H3 on the ComfyUI lane, spark-04)
 - 24 fps fixed; `seconds` 4–15; the server rounds frames up to 17n+5 (4 s → 107 frames, 15 s → 362).
-- Output is video **with generated audio** (speech, ambience). Put dialogue in quotes in the prompt; name the language.
+- Output is video **with generated audio** (speech, ambience). Spoken lines go in the official H3 dialogue tag, not in quotes: `(S1) <name> says: <d>[Chinese] 台词原文</d>` — quotes are reserved for text that should appear ON SCREEN. In the 2026-09-05 A/B sample, raw Chinese dialogue in quotes was burned in as subtitles (3.0 vs 4.3); treat quotes as on-screen text.
 - 16:9 at short edge 768 is the tuned resolution. `draft` uses short edge 480.
-- One job at a time on the GPU (shared with Krea image jobs); a 15 s clip is ~36–40 min on either `daily` or `fast` (Turbo's speed-up fades on long clips). Plan batches accordingly and poll with `video_status` every 60 s or use `jobs_list`.
+- One job at a time on the GPU (shared with Krea image jobs); a 15 s clip is ~36–40 min on either `daily` or `fast` (Turbo's speed-up fades on long clips). Plan batches accordingly and poll with `video_status` every 20–30 s (5 s draft ≈ 2 min) or use `jobs_list`.
 - Prompts: subject + action + camera + lighting + audio cue. English and Chinese both work.
 
 ## Images (Krea 2 via ComfyUI)
@@ -61,13 +61,13 @@ Never iterate prompts on `quality`. Never submit `quality` for more than one can
 
 ## Two text models behind the same gateway
 
-- `/v1/chat/completions` routes by model id: `qwen38-flash-next-nvfp4` (spark-01/02, TP2, 512K, primary for coding and review) and `qwen36-35b-a3b-nvfp4` (spark-03, single node, 256K, multimodal, MTP; de-censored by default, λ preset `code`). Use 3.6 for reverse-prompting images, parallel side tasks and anything that should not compete with the primary lane; both accept `image_url` parts.
+- `/v1/chat/completions` routes by model id. Since 2026-09-06 there is one text lane: `qwen38-flash-next-nvfp4` (spark-01/02, TP2, 512K, multimodal — accepts `image_url` parts; primary for coding, review and reverse prompts). The Qwen3.6 lane on spark-03 was retired to give that node to ComfyUI; `presets_list.models` is the live list — use only ids it shows.
 - A token may be restricted to a model allowlist; `/v1/models` lists what your token can use.
 
 ## Reverse-prompting an image (media-mcp ≥ 0.1.9)
 
 - `reverse_prompt(source=<job_id or URL>, style="sd")` returns a Krea-ready tag prompt + `negative_prompt`; `style="h3"` returns a MiniMax-H3 paragraph plus an `audio` line for `video_submit`; `style="plain"` a prose description (`lang="zh"` for Chinese notes/description). Feed `prompt` straight into `image_submit` / `video_submit`; keep the same seed discipline.
-- Inside ComfyUI you can call the same model without media-mcp tools: an OpenAI-compatible VLM node with `base_url http://192.168.1.100:8150/v1`, `model qwen36-35b-a3b-nvfp4`, an `mm_` token with `llm.chat`, the image as a data: URL. The gateway floors `max_tokens` to 8192 for thinking models (header `X-MM-Max-Tokens-Adjusted` tells you when it did), so do not fight it with small budgets.
+- Inside ComfyUI you can call the same model without media-mcp tools: an OpenAI-compatible VLM node with `base_url http://192.168.1.100:8150/v1`, `model qwen38-flash-next-nvfp4`, an `mm_` token with `llm.chat`, the image as a data: URL. The gateway floors `max_tokens` to 8192 for thinking models (header `X-MM-Max-Tokens-Adjusted` tells you when it did), so do not fight it with small budgets.
 - From inside the LAN (192.168.1.0/24) requests without a bearer act as the `lan-default` token (limited scopes); pass your own `mm_` token whenever you need more than it allows.
 
 ## Music and sound effects (media-mcp ≥ 0.2.0, comfy2 on spark-03)
@@ -79,11 +79,18 @@ Never iterate prompts on `quality`. Never submit `quality` for more than one can
 
 ## Which node does what (media-mcp ≥ 0.2.0, measured 2026-09-04)
 
-- **Lottery node = `comfy2` (spark-03)**: Krea first frames, 4 s `draft` lotteries and reverse prompts (Qwen3.6 lives there). Presets `krea-default` and `draft` prefer it. Timing is predictable (models reload every job: Krea ~30 s, 4 s draft 115–126 s) and it is never blocked behind a 15 s render. spark-04 is faster when its models are warm (4 s draft ~80 s) but 3–4x slower after a Krea job or cache eviction (270–340 s), so it is reserved for long clips.
+- **Lottery node = `comfy2` (spark-03)**: Krea first frames, 5 s `draft` lotteries. Since 2026-09-06 the node is ComfyUI-only (Qwen3.6 retired, ~104 GiB free). Presets `krea-default` and `draft` prefer it. Timing is predictable (models reload every job: Krea ~30 s, 4 s draft 115–126 s) and it is never blocked behind a 15 s render. spark-04 is faster when its models are warm (4 s draft ~80 s) but 3–4x slower after a Krea job or cache eviction (270–340 s), so it is reserved for long clips.
 - **Quality node = `comfy` (spark-04)**: `fast` / `daily` / `quality` (up to 15 s) are pinned there. A 15 s clip is a 36 min GPU hold, so never put a Krea image or a draft behind it: lottery first on comfy2, then one final on comfy.
 - ComfyUI executes one queue serially: a Krea image queued behind a running H3 job waits for the whole job (measured: +250 s wait). If you need an image while a long clip renders, it goes to comfy2 automatically.
 - Storyboard shots are capped at 6 s (`max_shot_seconds`); they may run on comfy2. Finals of an approved plan: `preset="quality"`.
 - Wuxia workflow: `image_submit(preset="krea-169")` (Krea 1344×768, comfy2) → pick frame → `video_submit(... seeds=[...])` 4 s drafts (spread over both, comfy2 first) → `video_review` → storyboard `continue` shots from the chosen last frame → one `quality` final on comfy.
+
+## Cloud providers (media-mcp ≥ 0.5.0, opt-in per entry, none enabled yet)
+
+- Cloud preset names as shipped (all `available: false` until their entry is enabled and keyed): video `bailian-wan27`, `ark-seedance`, `kling-std`, `vidu-turbo`, `hailuo-23`, `veo-fast`; image `qwen-image-pro`, `seedream-pro`, `flux2-pro`, `flux3-draft`; music `fun-music`; TTS voices `cloud-cherry` (阿里百炼 qwen3-tts-flash) and `cloud-minimax-calm` (MiniMax speech-2.8-hd). Check the `available` flag in `presets_list` before choosing one; a local preset is always the default.
+- The same tools reach paid cloud models when a preset's backend is a `type: cloud-media` entry of services.yaml (阿里百炼 wan / qwen-image / Qwen3-TTS / fun-music, 火山方舟 Seedance / Seedream, 可灵, 生数 Vidu, MiniMax 海螺 / Speech 2.8, Google Veo, BFL FLUX, 腾讯天御). Nothing new to learn on the client side: pick the cloud preset name shown by `presets_list` (its entry carries `cloud: true`, `model`, and `presets_list` → `backends.cloud` shows the billing unit and a cost estimate). Today every cloud entry is `enabled: false` and no key is configured, so such a preset answers `backend_rejected: cloud backend '<name>' is not available: 已停用` — do not retry, tell the user which entry/key is missing.
+- Cloud-only tools appear only when their entry is enabled: `voice_enroll(name, sample_url)` clones a voice on 阿里百炼 (¥0.01/voice, 10–20 s clean speech, never singing) and returns a `voice_id` for a cloud tts voice preset; `compliance_review(source)` sends a finished video (asset_id or allow-listed URL) to 腾讯天御 as the licensed publish gate and returns a job_id, `compliance_status(job_id)` returns the `verdict` (Suggestion Block|Review|Pass, Labels); `lipsync(video_asset_id, audio_asset_id)` (or `text=` instead of audio) lip-syncs an existing clip on 生数 Vidu and returns an ordinary video job (poll `video_status`, then `video_fetch`).
+- Cloud errors keep the same shape with a reason word first: `backend_rejected: <entry>: insufficient_balance|content_blocked|content_moderated|rate_limited|auth_failed|task_expired|cancelled|invalid_request: <detail>`. Cloud jobs record `params.cloud` = {provider, service, model, flow, cost_estimate, region, payment}; a cloud job is money, so never lottery (`seeds`/`n`) on a cloud preset without being asked.
 
 ## Etiquette
 - Always pass a `seed` you record; determinism is guaranteed for the same preset+seed.
