@@ -1,12 +1,12 @@
 ---
 name: media-production
 description: How to produce video, image, speech and translation assets on the ZhenBS DGX cluster through the media-mcp tools (H3 video, Krea images, Qwen3-TTS speech, Hy-MT2 translation, Qwen3.8 visual review, asset library). Use whenever a task needs generated media.
-verified_against: media-mcp 0.5.0 (2026-09-06)
+verified_against: media-mcp 0.5.1 (2026-09-06)
 ---
 
 # Media production on the cluster (media-mcp)
 
-All media generation goes through the `media-mcp` MCP server (tools: `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `workflow_submit`/`workflow_status`/`workflow_fetch`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search`/`asset_get`/`asset_tag`, `storyboard_plan`/`storyboard_plan_get`/`storyboard_plan_update`/`storyboard_run`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `jobs_list`, `job_recover`; cloud-only since 0.5.0, present only when the matching cloud entry is enabled: `voice_enroll`, `compliance_review`/`compliance_status`, `lipsync`). Text/code chat does not go through it. If a tool listed here is missing from the session (new tools since the last connect), ask the user to run `/mcp` and reconnect `media-mcp` before working around it.
+All media generation goes through the `media-mcp` MCP server (tools: `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `workflow_submit`/`workflow_status`/`workflow_fetch`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search`/`asset_get`/`asset_tag`/`asset_feedback_get`, `storyboard_plan`/`storyboard_plan_get`/`storyboard_plan_update`/`storyboard_run`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `jobs_list`, `job_recover`; cloud-only since 0.5.0, present only when the matching cloud entry is enabled: `voice_enroll`, `compliance_review`/`compliance_status`, `lipsync`). Text/code chat does not go through it. If a tool listed here is missing from the session (new tools since the last connect), ask the user to run `/mcp` and reconnect `media-mcp` before working around it.
 
 ## Search the library before generating (media-mcp ≥ 0.2.0)
 
@@ -22,6 +22,7 @@ Every completed job is copied to MinIO and indexed automatically (prompt, seed, 
   A job whose cancel the node never confirmed within the window shows `cancel_unconfirmed` (0.3.13): it keeps its
   slot, nothing releases it on a timer, and only `job_recover(job_id, action="abandon")` — after you checked the
   node — does; a job that finished while it was being cancelled comes back `completed` with its result.
+- `asset_feedback_get(asset_id)` (0.5.1, needs `jobs.read`) returns the HUMAN verdict the operator gave in the console (`rating` good / ok / bad, reason tags, note, every rater, the history with a job-side snapshot); `assets_search(rating="bad")` lists the failure-case set, `rating="none"` what nobody rated yet. Prefer works rated `good` as references.
 - `asset_tag(asset_id, add=["hero","ep1"], starred=true, collection="game-art")` marks keepers. **Drafts expire after 7 days** unless starred or in a collection; other presets are kept. Tag what you would want to find again.
 - `*_fetch` and `storyboard_fetch` now also return `asset_id` / `asset_url` (per shot too), so pass those on instead of presigned links.
 - Operators see the same library in the console (`/admin` → Assets: search, grid, tags, star, collections, same-seed resubmit, reverse prompt).
