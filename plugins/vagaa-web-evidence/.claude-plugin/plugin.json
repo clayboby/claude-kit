@@ -1,7 +1,7 @@
 {
   "name": "vagaa-web-evidence",
   "displayName": "Vagaa Web Evidence",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Free-first public-web search and page extraction through your own evidence router: one call per turn, citations only from extracted bodies, no paid provider without asking.",
   "author": {
     "name": "clayboby",
@@ -10,7 +10,13 @@
   "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-web-evidence",
   "repository": "https://github.com/clayboby/claude-kit",
   "license": "MIT",
-  "keywords": ["mcp", "web-search", "extraction", "evidence", "research"],
+  "keywords": [
+    "mcp",
+    "web-search",
+    "extraction",
+    "evidence",
+    "research"
+  ],
   "userConfig": {
     "nole_mcp_url": {
       "type": "string",

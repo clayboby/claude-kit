@@ -1,7 +1,7 @@
 {
   "name": "vagaa-media",
   "displayName": "Vagaa Media",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Produce video, images, music, speech and translations through your own media gateway, with an asset library, a vision review gate and a storyboard pipeline for long video.",
   "author": {
     "name": "clayboby",
@@ -10,7 +10,15 @@
   "homepage": "https://github.com/clayboby/claude-kit/tree/main/plugins/vagaa-media",
   "repository": "https://github.com/clayboby/claude-kit",
   "license": "MIT",
-  "keywords": ["mcp", "media", "video", "image", "music", "tts", "storyboard"],
+  "keywords": [
+    "mcp",
+    "media",
+    "video",
+    "image",
+    "music",
+    "tts",
+    "storyboard"
+  ],
   "userConfig": {
     "media_mcp_url": {
       "type": "string",
