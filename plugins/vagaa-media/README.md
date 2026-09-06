@@ -23,7 +23,12 @@ fill in at install time; the token is `sensitive`, so Claude Code stores it in y
 | Component | What it does |
 |---|---|
 | MCP server `media` | `video_*`, `image_*`, `music_*`, `workflow_*`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search` / `asset_get` / `asset_tag`, `storyboard_*`, `presets_list`, `jobs_list` — 28 tools on the standard surface |
-| Skill `media-production` | Search the library first, draft cheaply, review with the vision model, render the final on the same seed; the five-step storyboard pipeline for anything longer than one clip |
+| Skill `media-production` | The loop: search the library first, draft cheaply, review with the vision model, render the final on the same seed; speech, translation, the asset library and job recovery |
+| Skill `video-prompting` | Write, rewrite (`prompt_rewrite`), diagnose or A/B a single-clip video prompt — dialogue, on-screen text, references; produces text or a `prompt_id`, never generates by itself |
+| Skill `storyboard-longform` | Multi-shot films: plan, continuity, resume, assembly (`storyboard_*`) |
+| Skill `image-edit-and-reference` | References, identity, edits — and which of those are exposed today |
+| Skill `music-and-sfx` | BGM, SFX, levels |
+| `skills/_shared/cluster-facts.md` | The one facts file the five skills point to (nodes, timings, presets, voices, limits, error codes); each skill carries its sha256 |
 | Command `/vagaa-media:media-status` | Recent jobs, what is in flight, what is completed but not fetched. User-invoked only |
 | Hook `SessionStart` | Health probe plus one authenticated `server/discover`, so a bad token, a bad URL and a down service are told apart before you waste a turn |
 | Hook `PostToolUse` | After a media fetch, relays the stable `/assets/<id>` URL into the conversation |
