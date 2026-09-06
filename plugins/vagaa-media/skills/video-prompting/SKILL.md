@@ -1,7 +1,7 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.6.0 (2026-09-06)
+verified_against: media-mcp 0.6.1 (2026-09-07)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 7d364005ed4a335557afc36ef0b39191a9b81b3ecfc5b8b23c2d348fc91485d2
 ---
@@ -33,6 +33,9 @@ non_diegetic_music: <1-3 sentences: instruments, tempo, dynamics; or N/A>
 prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset": "draft"}, mode="t2v", seconds=5,
                language_policy={"description_language": "en"}, protected_content={"dialogue": [...], "screen_text": [...]},
                profile_version=None, on_failure="error", force=false)
+# profile_version="1.0.1" (0.6.1, experimental): the same H3 rules plus locked brief elements (place, people, time, mood, action) and a
+# text-level faithfulness judge — one extra LLM call; an unfaithful rewrite is retried once with the judge's issues, then fails. Use it
+# when the brief names a specific place or mood the model tends to dramatise. Default stays 1.0.0 until 1.0.1 passes its own T3.
 ```
 - Covered in 0.6.0: H3 `draft`, `t2v`, 5 s, dialogue zh/en. Other presets, `seconds`, modes (i2v / fl2v / ref2v) or any `references` are refused
   (`unsupported_target` / `unsupported_references`) — write those prompts by hand with §1 and say so; do not pretend the tool covered them.
