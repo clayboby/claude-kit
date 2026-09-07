@@ -1,7 +1,7 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.6.1 (2026-09-07)
+verified_against: media-mcp 0.6.3 (2026-09-07)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 7d364005ed4a335557afc36ef0b39191a9b81b3ecfc5b8b23c2d348fc91485d2
 ---

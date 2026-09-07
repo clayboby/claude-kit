@@ -12,7 +12,7 @@
       "displayName": "Vagaa Media",
       "source": "./plugins/vagaa-media",
       "description": "Produce video, images, music, speech and translations through your own media gateway, with an asset library, a vision review gate and a storyboard pipeline for long video.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "author": {
         "name": "clayboby",
         "url": "https://github.com/clayboby"
@@ -36,7 +36,7 @@
       "displayName": "Vagaa Web Evidence",
       "source": "./plugins/vagaa-web-evidence",
       "description": "Free-first public-web search and page extraction through your own evidence router: one call per turn, citations only from extracted bodies, no paid provider without asking.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "author": {
         "name": "clayboby",
         "url": "https://github.com/clayboby"
@@ -58,7 +58,7 @@
       "displayName": "Vagaa DGX",
       "source": "./plugins/vagaa-dgx",
       "description": "Bundle: installs vagaa-media and vagaa-web-evidence together. Ships no components of its own.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "author": {
         "name": "clayboby",
         "url": "https://github.com/clayboby"

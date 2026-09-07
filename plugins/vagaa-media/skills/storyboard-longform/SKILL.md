@@ -1,7 +1,7 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.6.1 (2026-09-07)
+verified_against: media-mcp 0.6.3 (2026-09-07)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 7d364005ed4a335557afc36ef0b39191a9b81b3ecfc5b8b23c2d348fc91485d2
 ---

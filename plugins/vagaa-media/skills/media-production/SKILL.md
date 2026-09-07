@@ -1,7 +1,7 @@
 ---
 name: media-production
 description: Use to search or review media assets, create standalone images or video clips, or generate speech and translations through media-mcp; coordinate the draft, review, and final workflow and load specialist skills when needed.
-verified_against: media-mcp 0.6.1 (2026-09-07)
+verified_against: media-mcp 0.6.3 (2026-09-07)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 7d364005ed4a335557afc36ef0b39191a9b81b3ecfc5b8b23c2d348fc91485d2
 ---
