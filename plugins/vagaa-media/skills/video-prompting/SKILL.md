@@ -3,7 +3,7 @@ name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
 verified_against: media-mcp 0.7.0 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 1273f3123e626facfef4183b85ac5bbba49e632bd5be5f023b6d8a28c6d49afb
+shared_facts_sha256: 1099929addca59f6052fe67f0c64c5afa50903c187f0b8a5be15ac1aa1400fb0
 ---
 
 # Writing video prompts for MiniMax-H3 (single clip)
