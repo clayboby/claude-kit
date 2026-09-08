@@ -1,9 +1,9 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.6.5 (2026-09-07)
+verified_against: media-mcp 0.7.0 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 7d364005ed4a335557afc36ef0b39191a9b81b3ecfc5b8b23c2d348fc91485d2
+shared_facts_sha256: 1273f3123e626facfef4183b85ac5bbba49e632bd5be5f023b6d8a28c6d49afb
 ---
 
 # Writing video prompts for MiniMax-H3 (single clip)
@@ -62,3 +62,10 @@ prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset":
 Same preset, same `seconds`, same `seed`, submitted back to back so both land on the same node when possible (check `backend` in each job); review both
 with `video_review(job_id, prompt=<the original brief>)` so the reviewer sees the same brief, not the candidate text. One seed is a lead, not a
 statistic — `media-mcp/tools/prompt_ab.py` runs the paired protocol (random order, blinded review, hard generation cap); report deltas per brief.
+
+## 6. Multi-segment or media-driven clips: hand the plan to `director_run` (0.7.0)
+Prompt text from this skill goes into `director_run(segments=[{prompt, seconds, …}])` when the piece has more than one beat, needs a first/last frame,
+a reference face/voice, or a source video; see `storyboard-longform` §6 for the call shape. One rule of thumb for the prompt of a continued
+segment: describe the new beat only ("He turns to the camera and grins."), the previous segment's motion is carried over by the node.
+Put the look (medium, palette, lens) in `style` once — it is prefixed to every segment — and keep segment prompts to action, sound and dialogue.
+Poll `director_status(run_id)`, then `director_fetch(run_id)`.

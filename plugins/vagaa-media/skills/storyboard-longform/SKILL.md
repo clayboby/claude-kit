@@ -1,9 +1,9 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.6.5 (2026-09-07)
+verified_against: media-mcp 0.7.0 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 7d364005ed4a335557afc36ef0b39191a9b81b3ecfc5b8b23c2d348fc91485d2
+shared_facts_sha256: 1273f3123e626facfef4183b85ac5bbba49e632bd5be5f023b6d8a28c6d49afb
 ---
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
@@ -50,3 +50,29 @@ tool in 0.6.0 (a compose / loudnorm chain is a 0.6.1 candidate): say so and hand
 ## 5. Wuxia-style workflow (first frame → drafts → continue → final)
 `image_submit(preset="krea-169")` (Krea 1344×768) → pick the frame → `video_submit(image_url=<frame>, preset="draft", seeds=[...])` 4–5 s drafts →
 `video_review` → plan the continuation shots from the chosen last frame with `transition: "continue"` → one `quality` run of the approved plan.
+
+## 6. Director console (`director_run`, 0.7.0) — the default for multi-segment work
+One job renders a whole plan through the community MiniMaxH3 Director node (installed on both ComfyUI nodes): segments continue motion AND
+audio across joins (22-frame guide window), and every input type is accepted in the same call.
+```
+director_run(segments=[
+  {"prompt": "<H3-grammar or plain English>", "seconds": 5},                                   # t2v
+  {"prompt": "...", "seconds": 4, "first_frame": "as-…|job-id|https://…", "last_frame": "…"},   # fl2v (first only = i2v)
+  {"prompt": "<Picture 1> <Audio 1> …", "seconds": 5, "ref_images": ["as-…"], "ref_audios": ["as-…"]},  # r2v (≤9 images, ≤3 audios)
+  {"prompt": "keep the motion of <Video 1>, …", "seconds": 5, "source_video": "as-…"}          # v2v (exactly one segment per plan)
+], style="Live-action, cinematic.", width=832, height=480, seed=None, continuity=True, idempotency_key="<your plan id>")
+→ {run_id, task, segments[{idx, mode, frames, seconds}], total_frames, seconds, seed, uploads[]}
+director_status(run_id) → queued|running|completed|failed|lost ; director_fetch(run_id) → url / asset_id / asset_url
+```
+- `style` is prefixed to EVERY segment prompt (the node reads segment prompts only): keep it a short look-and-medium line, put beats in the segments.
+- `idempotency_key`: reuse your own plan id on a retry and you get the same run back instead of a second render.
+- Media references (asset ids, job ids, allowlisted URLs) are uploaded to every node automatically; nothing to place by hand.
+- `mode` is inferred from the media given. One plan is one timeline kind: t2v segments may sit beside fl2v OR r2v ones, but fl2v and r2v
+  cannot share a plan and v2v is always alone (the call is rejected with `invalid_argument`, nothing is uploaded). An explicit mode
+  without its media (r2v with no refs, fl2v with no frame) is rejected too — the node would silently fall back to plain t2v.
+- Seconds snap UP to H3's 17k+5 frame grid (5 s → 124 frames, 4 s → 107); 0.2–15 s per segment. Keep a plan ≤ 24 segments.
+- v2v takes its length from the source (ffprobe), not from `seconds`; sources over 362 frames (~15 s) are rejected: trim first.
+- Draft = 832×480 (default). Final = width 1344, height 768 — same call, ~4× the time. Never iterate prompts on a final.
+- fl2v with only a first frame tends to stay still: give it an end frame or write the movement beat by beat.
+- r2v references live on the segment (the node ignores plan-level references): always attach `ref_images`/`ref_audios` to the segment that uses them and cite `<Picture N>` / `<Audio N>` in that prompt.
+- When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
