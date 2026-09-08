@@ -1,9 +1,9 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.0 (2026-09-09)
+verified_against: media-mcp 0.7.1 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 1099929addca59f6052fe67f0c64c5afa50903c187f0b8a5be15ac1aa1400fb0
+shared_facts_sha256: 243faf8cf6d877ea270703b935ea8d7cf856968a1af54ceaed218c8a865eb9ef
 ---
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
@@ -75,4 +75,19 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 - Draft = 832×480 (default). Final = width 1344, height 768 — same call, ~4× the time. Never iterate prompts on a final.
 - fl2v with only a first frame tends to stay still: give it an end frame or write the movement beat by beat.
 - r2v references live on the segment (the node ignores plan-level references): always attach `ref_images`/`ref_audios` to the segment that uses them and cite `<Picture N>` / `<Audio N>` in that prompt.
+- `video_submit(prompt, preset="director_t2v")` runs the same director graph for ONE text segment — a quick single clip on the
+  director models; multi-segment or media-driven work goes through `director_run`.
+- 0.7.1 character table — declare once, mention anywhere:
+  ```
+  director_run(characters={"小明": {"image": "as-…", "voice": "as-…"}, "阿花": "as-…"}, language="Chinese",
+               segments=[{"prompt": "@小明 hands @阿花 a lantern.\n小明: 来,刚烤好的!\n旁白: 夜市刚刚醒来。", "seconds": 5}])
+  ```
+  `@alias` becomes `<Picture N>` and that character's image/voice are attached to THAT segment (it becomes r2v). A line `alias: 台词`
+  becomes `<Picture N> says in the voice of <Audio M>: <d>[Chinese] 台词</d>`; `旁白: …` / `Narrator: …` becomes an off-screen voice-over
+  with lips closed. Characters cannot be mentioned in a segment that carries a first/last frame or a source video (rejected before upload).
+- 0.7.1 final quality: `refine="latent_upscale"` (+ `refine_width=1344, refine_height=768`) enlarges the draft's H3 latent with the 3D
+  upscaler in the same job — no second sampling; `director_fetch` reports `refine_applied` (false + a warning means the node fell back
+  to the draft). In fl2v plans the given frames pass through the upscaler too. Iterate prompts on drafts, add `refine` only for the
+  accepted plan. (Second-sampling modes are not offered yet.) Spoken lines never carry tags: an `@alias` inside a line someone speaks
+  becomes the plain name, while the character is still attached.
 - When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.

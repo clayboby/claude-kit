@@ -1,9 +1,9 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.7.0 (2026-09-09)
+verified_against: media-mcp 0.7.1 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 1099929addca59f6052fe67f0c64c5afa50903c187f0b8a5be15ac1aa1400fb0
+shared_facts_sha256: 243faf8cf6d877ea270703b935ea8d7cf856968a1af54ceaed218c8a865eb9ef
 ---
 
 # Writing video prompts for MiniMax-H3 (single clip)
@@ -69,3 +69,5 @@ a reference face/voice, or a source video; see `storyboard-longform` §6 for the
 segment: describe the new beat only ("He turns to the camera and grins."), the previous segment's motion is carried over by the node.
 Put the look (medium, palette, lens) in `style` once — it is prefixed to every segment — and keep segment prompts to action, sound and dialogue.
 Poll `director_status(run_id)`, then `director_fetch(run_id)`.
+With a `characters` table you can write `@别名` for a reference face and `别名: 台词` / `旁白: 台词` for spoken lines — the server expands them
+into `<Picture N>` / `<d>[Language] …</d>` (storyboard-longform §6 has the call shape); keep writing full H3 grammar when you need control.
