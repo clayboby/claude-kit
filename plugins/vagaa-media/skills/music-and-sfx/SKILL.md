@@ -1,7 +1,7 @@
 ---
 name: music-and-sfx
 description: Use to generate background music or sound effects, normalize audio levels, and mix audio tracks with media; use media-production for spoken narration and translation.
-verified_against: media-mcp 0.7.3 (2026-09-09)
+verified_against: media-mcp 0.7.4 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 243faf8cf6d877ea270703b935ea8d7cf856968a1af54ceaed218c8a865eb9ef
 ---
