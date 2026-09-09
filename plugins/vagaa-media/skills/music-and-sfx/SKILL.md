@@ -1,9 +1,9 @@
 ---
 name: music-and-sfx
 description: Use to generate background music or sound effects, normalize audio levels, and mix audio tracks with media; use media-production for spoken narration and translation.
-verified_against: media-mcp 0.7.7 (2026-09-10)
+verified_against: media-mcp 0.7.8 (2026-09-10)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 7529e32af9e2c41b037ca963beb32bd976e4d92c7e51cf52d95150d515a0cc17
+shared_facts_sha256: c9fc686dfb592f0438c0200836c73a41e60c9ecc2d59b84692d37feae96372f5
 ---
 
 # Music and sound effects (ACE-Step + Stable Audio 3 on comfy2)

@@ -1,9 +1,9 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.7 (2026-09-10)
+verified_against: media-mcp 0.7.8 (2026-09-10)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 7529e32af9e2c41b037ca963beb32bd976e4d92c7e51cf52d95150d515a0cc17
+shared_facts_sha256: c9fc686dfb592f0438c0200836c73a41e60c9ecc2d59b84692d37feae96372f5
 ---
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
@@ -104,5 +104,5 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   then one `Sound: …` sentence; then the `旁白:` / `别名:` lines. No `video_submit` section labels in a segment; no background music (promo48
   human ratings). Face-size / closed-lips / which-hand stage directions are not what published human prompts are made of; the server adds
   the closed-lips sentence for narration itself (official guide).
-- `director_pack_export(run_id)` → the Director node's own pack zip (24 h link) for the ComfyUI UI (导入导演包); runs before 0.7.7 cannot be exported.
+- Packs: `director_pack_export(run_id)` → the node's own zip for the ComfyUI UI (导入导演包; runs before 0.7.7 cannot); `director_pack_import(pack_url|pack_asset)` → `pack_id` + what it would render; `director_pack_run(pack_id, seed=…, refine=…)` renders it as recorded.
 - When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
