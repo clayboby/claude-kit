@@ -12,14 +12,12 @@ Anything longer than one 15 s clip goes through the storyboard tools (plan → r
 Facts (shot limits, timings, review gate, continuity modes): `../_shared/cluster-facts.md`. Single-clip prompt wording: `video-prompting`.
 Reference images / identity across shots is split: cross-shot continuity is this skill; reference-driven generation is `image-edit-and-reference`.
 
-## 0. Brief before shots (the part a producer writes; a plan without it optimises the wrong thing)
-Before any shot list, write these five lines and keep them at the top of the plan notes — they are what the 2026-09-09 trial lacked
-(`tools/evals/plugin-trial-20260909/`; its film passed every technical review and was judged wrong on emotion, tone, scene and plot):
-1) one sentence of what happens; 2) genre and tone (tragedy / comedy / restraint, what the cold or the light means); 3) what the viewer
-should feel at the start, the middle and the end; 4) references (a film scene, or an earlier accepted run's asset id); 5) don'ts (smiles,
-bright streets, storybook look, music, happy ending…). Every shot then names its emotion and the character's physical state before its
-action. Real brief templates: LOOK Studios production brief and the WKKF creative-brief template (cited in
-`reference/research/20260909-human-vs-ai-h3-prompts.md` §5). Reviewers judge shots against these five lines first, technique second.
+## 0. Brief before shots (the producer's part; the 2026-09-09 trial film passed every technical review and was judged wrong on
+emotion, tone, scene and plot because it had none — `tools/evals/plugin-trial-20260909/`)
+Five lines at the top of the plan notes, judged before any technique: 1) one sentence of what happens; 2) genre and tone (what the
+cold or the light means); 3) what the viewer feels at start / middle / end; 4) references (a film scene or an accepted run's asset id);
+5) don'ts (smiles, bright streets, storybook look, music, happy ending…). Each shot then names its emotion and the character's physical
+state before its action. Templates: LOOK Studios and WKKF briefs, cited in `reference/research/20260909-human-vs-ai-h3-prompts.md` §5.
 
 ## 1. Plan
 `storyboard_plan(text, style?, characters?, target_seconds?, shot_seconds=5, language?)` → `plan_id` + `plan` + `shot_prompts`.
