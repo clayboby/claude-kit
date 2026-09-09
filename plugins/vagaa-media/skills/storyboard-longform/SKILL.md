@@ -12,6 +12,15 @@ Anything longer than one 15 s clip goes through the storyboard tools (plan → r
 Facts (shot limits, timings, review gate, continuity modes): `../_shared/cluster-facts.md`. Single-clip prompt wording: `video-prompting`.
 Reference images / identity across shots is split: cross-shot continuity is this skill; reference-driven generation is `image-edit-and-reference`.
 
+## 0. Brief before shots (the part a producer writes; a plan without it optimises the wrong thing)
+Before any shot list, write these five lines and keep them at the top of the plan notes — they are what the 2026-09-09 trial lacked
+(`tools/evals/plugin-trial-20260909/`; its film passed every technical review and was judged wrong on emotion, tone, scene and plot):
+1) one sentence of what happens; 2) genre and tone (tragedy / comedy / restraint, what the cold or the light means); 3) what the viewer
+should feel at the start, the middle and the end; 4) references (a film scene, or an earlier accepted run's asset id); 5) don'ts (smiles,
+bright streets, storybook look, music, happy ending…). Every shot then names its emotion and the character's physical state before its
+action. Real brief templates: LOOK Studios production brief and the WKKF creative-brief template (cited in
+`reference/research/20260909-human-vs-ai-h3-prompts.md` §5). Reviewers judge shots against these five lines first, technique second.
+
 ## 1. Plan
 `storyboard_plan(text, style?, characters?, target_seconds?, shot_seconds=5, language?)` → `plan_id` + `plan` + `shot_prompts`.
 - Feed a **novel chapter** as-is (up to ~60k chars; split longer chapters by scene), a **shot script** as free text (one paragraph per shot) or
@@ -47,9 +56,8 @@ Reference images / identity across shots is split: cross-shot continuity is this
 frames, retries}`. Hand the stable asset URLs on. Trimming, re-ordering, overlaying music or burning subtitles after assembly is not exposed as a
 tool in 0.6.0 (a compose / loudnorm chain is a 0.6.1 candidate): say so and hand the per-shot clips to the user's editor instead of improvising.
 
-## 5. Wuxia-style workflow (first frame → drafts → continue → final)
-`image_submit(preset="krea-169")` (Krea 1344×768) → pick the frame → `video_submit(image_url=<frame>, preset="draft", seeds=[...])` 4–5 s drafts →
-`video_review` → plan the continuation shots from the chosen last frame with `transition: "continue"` → one `quality` run of the approved plan.
+## 5. Wuxia-style workflow: `image_submit(preset="krea-169")` → pick the frame → 4–5 s `draft` clips from it → `video_review` →
+continuation shots from the chosen last frame (`transition: "continue"`) → one `quality` run of the approved plan.
 
 ## 6. Director console (`director_run`, 0.7.0) — the default for multi-segment work
 One job renders a whole plan through the community MiniMaxH3 Director node (installed on both ComfyUI nodes): segments continue motion AND
