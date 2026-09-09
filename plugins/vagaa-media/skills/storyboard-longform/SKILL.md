@@ -1,7 +1,7 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.4 (2026-09-09)
+verified_against: media-mcp 0.7.5 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 243faf8cf6d877ea270703b935ea8d7cf856968a1af54ceaed218c8a865eb9ef
 ---
@@ -95,7 +95,8 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   · Whole plan: `frames × width × height` ≤ 851 × 1344 × 768 — 1128 frames at 1344×768 was killed by the kernel OOM (TODO 09-09 09:2x).
   · Framing for dialogue made no measurable difference to speech or mouth shape (n=3 each, R E2): frame for the story, not the model.
   · Three independent changes in a 4 s segment executed one and jump-cut (n=2, R E4): prefer one visible change per continued segment.
-  · Native 1344×768 (768p 8-step LoRA) is ~1.6–2× sharper than 480p + latent upscale at ~2.5× the time (R E3): drafts 480p, photographic finals native.
+  · Finals (R E3/E6/E7, sharpness : time vs 480p+latent_upscale = 1 : 1): `refine="upscale"` (author's second pass) 1.6× : 1.8–3.5×;
+    native 768p turbo 1.6× : 2.5–3×; official 20-step native 2.6–5× : 6–7×. Default final = `refine="upscale"`; showcase = 20-step.
 - How to write a segment (official guide + published examples, `reference/research/20260909-human-vs-ai-h3-prompts.md` §3–4): `style` is
   prefixed to EVERY segment by the server, so keep weather and light out of it. Write motivated action with a change of feeling, as the official
   reference example does (“Her annoyance softens as she looks toward the Samoyed”, “with a playful tone and an easy conversational pace”);
