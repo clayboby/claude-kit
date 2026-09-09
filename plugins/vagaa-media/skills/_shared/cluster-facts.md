@@ -66,3 +66,4 @@ Errors are `<code>: <detail>` with code ∈ backend_unreachable, backend_timeout
 invalid_preset, invalid_argument, queue_full, job_not_found, forbidden, limit_exceeded, and (0.6.0) unsupported_target,
 unsupported_references, unsupported_language, rewrite_failed, prompt_not_found, prompt_not_usable, prompt_binding_mismatch,
 idempotency_in_progress, idempotency_failed, profile_not_found.
+- Links a fetch returns (verified from the public internet 2026-09-09): `url` = presigned S3 link on `https://s3.zhenbs.com:10000`, opens ANYWHERE (phone, no login) for 24 h, supports seeking; `asset_url` = permanent `https://media-mcp.zhenbs.com:10000/assets/<id>`, needs the bearer (or the LAN default principal) — give the user `url` for "open it now", keep `asset_url` for records and for passing back to tools. Presigned URLs may be passed back as `image_url` / `first_frame` (the host is allowlisted).
