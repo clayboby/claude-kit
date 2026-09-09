@@ -2,10 +2,37 @@
 
 Claude Code plugins and skills maintained by clayboby, published as a plugin marketplace.
 
+## 一键安装 / One-click install
+
+Inside Claude Code (any project):
+
 ```
 /plugin marketplace add clayboby/claude-kit
-/plugin install vagaa-dgx@claude-kit          # both plugins below
+/plugin install vagaa-media@claude-kit
 ```
+
+Or from a terminal, non-interactive (fills the options in one go — the token goes to the OS keychain, never a file):
+
+```bash
+claude plugin marketplace add clayboby/claude-kit
+claude plugin install vagaa-media@claude-kit \
+  --config media_mcp_url=https://<your-gateway>/mcp \
+  --config media_mcp_token=<bearer token from the gateway console: Tokens → New> \
+  --config surface=standard
+claude plugin list          # shows version + enabled
+```
+
+Then start Claude Code and check: `/mcp` lists `media` as connected, and asking "list the media tools you have" returns
+video / image / music / tts / storyboard / director tools. The session-start hook prints the gateway version it verified.
+
+### Update
+
+```bash
+claude plugin marketplace update claude-kit      # refresh the catalog
+claude plugin update vagaa-media@claude-kit      # e.g. 0.3.7 -> 0.3.8; restart Claude Code to apply
+```
+
+Skills carry a `verified_against: media-mcp <version>` stamp; the session-start hook warns when the gateway is newer than the skills.
 
 Nothing in this repository contains an address, a token or a hostname of a private deployment: every
 plugin reads its endpoints and credentials from `userConfig` at install time. Credentials are
@@ -23,7 +50,7 @@ rather than in any settings file you might commit.
 | | |
 |---|---|
 | Requires Claude Code | **≥ 2.1.259** |
-| Verified against | **media-mcp 0.3.5** (`vagaa-media`), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
+| Verified against | **media-mcp 0.7.3** (`vagaa-media` 0.3.8: director console `director_run`, characters table, `refine=latent_upscale`), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3`; no packages, no network access beyond your own gateways |
 
