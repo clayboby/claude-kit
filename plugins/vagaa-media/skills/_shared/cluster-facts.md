@@ -7,7 +7,7 @@ update the number and the date, never the prose around it. Verified against medi
 
 ## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries)
 `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `music_submit`/`music_status`/`music_fetch`,
-`workflow_submit`/`workflow_status`/`workflow_fetch`, `director_run`/`director_status`/`director_fetch`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`,
+`workflow_submit`/`workflow_status`/`workflow_fetch`, `director_run`/`director_status`/`director_fetch`/`director_pack_export`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`,
 `prompt_rewrite`/`prompt_get` (0.6.0), `assets_search`/`asset_get`/`asset_tag`, `storyboard_plan`/`storyboard_plan_get`/
 `storyboard_plan_update`/`storyboard_run`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `jobs_list`, `job_recover` (admin).
 Cloud-only, present only when the matching cloud entry is enabled (none is, 2026-09-06): `voice_enroll`, `compliance_review`/

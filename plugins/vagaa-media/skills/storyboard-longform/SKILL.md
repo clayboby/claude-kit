@@ -1,9 +1,9 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.6 (2026-09-09)
+verified_against: media-mcp 0.7.7 (2026-09-10)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: cff90aa5e3b2d93c07f67d45adc808f6cdf65195f8370d7048fbb65f2847ca70
+shared_facts_sha256: 7529e32af9e2c41b037ca963beb32bd976e4d92c7e51cf52d95150d515a0cc17
 ---
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
@@ -67,8 +67,7 @@ director_run(segments=[
 → {run_id, task, segments[{idx, mode, frames, seconds}], total_frames, seconds, seed, uploads[]}
 director_status(run_id) → queued|running|completed|failed|lost ; director_fetch(run_id) → url / asset_id / asset_url
 ```
-- `style` is prefixed to EVERY segment prompt (the node reads segment prompts only): keep it a short look-and-medium line, put beats in the segments.
-- `idempotency_key`: reuse your own plan id on a retry and you get the same run back instead of a second render.
+- `style` is prefixed to EVERY segment (the node reads segment prompts only): a short look-and-medium line; `idempotency_key` = your plan id (a retry returns the same run).
 - `mode` is inferred from the media given. One plan is one timeline kind: t2v segments may sit beside fl2v OR r2v ones, but fl2v and r2v
   cannot share a plan and v2v is always alone (the call is rejected with `invalid_argument`, nothing is uploaded). An explicit mode
   without its media (r2v with no refs, fl2v with no frame) is rejected too — the node would silently fall back to plain t2v.
@@ -105,4 +104,5 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   then one `Sound: …` sentence; then the `旁白:` / `别名:` lines. No `video_submit` section labels in a segment; no background music (promo48
   human ratings). Face-size / closed-lips / which-hand stage directions are not what published human prompts are made of; the server adds
   the closed-lips sentence for narration itself (official guide).
+- `director_pack_export(run_id)` → the Director node's own pack zip (24 h link) for the ComfyUI UI (导入导演包); runs before 0.7.7 cannot be exported.
 - When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
