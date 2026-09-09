@@ -12,7 +12,7 @@
       "displayName": "Vagaa Media",
       "source": "./plugins/vagaa-media",
       "description": "Produce video, images, music, speech and translations through your own media gateway, with an asset library, a vision review gate and a storyboard pipeline for long video.",
-      "version": "0.3.7",
+      "version": "0.3.8",
       "author": {
         "name": "clayboby",
         "url": "https://github.com/clayboby"

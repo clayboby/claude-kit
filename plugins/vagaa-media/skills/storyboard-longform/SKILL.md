@@ -1,7 +1,7 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.1 (2026-09-09)
+verified_against: media-mcp 0.7.3 (2026-09-09)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 243faf8cf6d877ea270703b935ea8d7cf856968a1af54ceaed218c8a865eb9ef
 ---
@@ -90,4 +90,15 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   to the draft). In fl2v plans the given frames pass through the upscaler too. Iterate prompts on drafts, add `refine` only for the
   accepted plan. (Second-sampling modes are not offered yet.) Spoken lines never carry tags: an `@alias` inside a line someone speaks
   becomes the plain name, while the character is still attached.
+- Speech budget: H3 speaks Mandarin at ~4 chars/s and never speeds up — a line that does not fit is dropped or cut. Budget ≈ 0.5 s +
+  0.28 s per Chinese character (0.37 s per English word) + 0.12 s per punctuation mark; `director_run` refuses a segment over budget.
+  One line per 5 s segment; a 20-character line needs 7–8 s. Dialogue goes to a shot with the speaker's FACE large and unobscured
+  (medium close-up, facing camera or 3/4, no striking / crossing objects during the line); keep the speaker in frame at the END of a
+  segment the next one continues from; a continued segment adds ONE new element.
+- Whole-plan ceiling: output `frames × width × height` ≤ 851 × 1344 × 768 (≈35 s at 1344×768 with `refine`, ≈90 s at 832×480). Longer
+  stories = several `director_run` calls cut at scene changes; the server refuses an oversize plan before uploading.
+- Segment prompt shape (plugin trial 2026-09-09): free prose + shortcut lines — picture (framing, the one new beat, the end state), then
+  one `Sound: …` sentence of diegetic ambience, then `旁白:` / `别名:` lines. No `overall_soundscape:` / `non_diegetic_music:` labels
+  (that is `video_submit` grammar) and no background music (it fights the picture on this lane). Name every light source and which hand
+  holds which prop so the next segment can carry them; `style` is prefixed to EVERY segment, so keep weather and light out of it.
 - When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
