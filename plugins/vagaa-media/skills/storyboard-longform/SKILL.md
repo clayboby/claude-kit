@@ -54,9 +54,6 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
 frames, retries}`. Hand the stable asset URLs on. Trimming, re-ordering, overlaying music or burning subtitles after assembly is not exposed as a
 tool in 0.6.0 (a compose / loudnorm chain is a 0.6.1 candidate): say so and hand the per-shot clips to the user's editor instead of improvising.
 
-## 5. Wuxia-style workflow: `image_submit(preset="krea-169")` → pick the frame → 4–5 s `draft` clips from it → `video_review` →
-continuation shots from the chosen last frame (`transition: "continue"`) → one `quality` run of the approved plan.
-
 ## 6. Director console (`director_run`, 0.7.0) — the default for multi-segment work
 One job renders a whole plan through the community MiniMaxH3 Director node (installed on both ComfyUI nodes): segments continue motion AND
 audio across joins (22-frame guide window), and every input type is accepted in the same call.
@@ -72,7 +69,6 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 ```
 - `style` is prefixed to EVERY segment prompt (the node reads segment prompts only): keep it a short look-and-medium line, put beats in the segments.
 - `idempotency_key`: reuse your own plan id on a retry and you get the same run back instead of a second render.
-- Media references (asset ids, job ids, allowlisted URLs) are uploaded to every node automatically; nothing to place by hand.
 - `mode` is inferred from the media given. One plan is one timeline kind: t2v segments may sit beside fl2v OR r2v ones, but fl2v and r2v
   cannot share a plan and v2v is always alone (the call is rejected with `invalid_argument`, nothing is uploaded). An explicit mode
   without its media (r2v with no refs, fl2v with no frame) is rejected too — the node would silently fall back to plain t2v.
