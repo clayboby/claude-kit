@@ -50,7 +50,7 @@ rather than in any settings file you might commit.
 | | |
 |---|---|
 | Requires Claude Code | **≥ 2.1.259** |
-| Verified against | **media-mcp 0.7.9** (`vagaa-media` 0.3.16: `storyboard_direct` plan→one director job; director console `director_run`, characters table, `refine=latent_upscale`), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
+| Verified against | **media-mcp 0.7.10** (`vagaa-media` 0.3.17: plan character references by asset id; `storyboard_direct` plan→one director job; director console `director_run`, characters table, `refine=latent_upscale`), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3`; no packages, no network access beyond your own gateways |
 

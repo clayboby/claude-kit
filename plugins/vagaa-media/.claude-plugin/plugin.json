@@ -1,7 +1,7 @@
 {
   "name": "vagaa-media",
   "displayName": "Vagaa Media",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "description": "Produce video, images, music, speech and translations through your own media gateway, with an asset library, a vision review gate and a storyboard pipeline for long video.",
   "author": {
     "name": "clayboby",
