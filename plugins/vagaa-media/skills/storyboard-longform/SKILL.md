@@ -1,9 +1,9 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.8 (2026-09-10)
+verified_against: media-mcp 0.7.9 (2026-09-10)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: c9fc686dfb592f0438c0200836c73a41e60c9ecc2d59b84692d37feae96372f5
+shared_facts_sha256: ddbd7d38834fa82ec5e44d69d0263cf9e9251f395dc2fc5117cb2e5012e52c86
 ---
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
@@ -96,13 +96,12 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   · Whole plan: `frames × width × height` ≤ 851 × 1344 × 768 — 1128 frames at 1344×768 was killed by the kernel OOM (TODO 09-09 09:2x).
   · Framing for dialogue made no measurable difference to speech or mouth shape (n=3 each, R E2): frame for the story, not the model.
   · Three independent changes in a 4 s segment executed one and jump-cut (n=2, R E4): prefer one visible change per continued segment.
-  · Finals (R E3/E6/E7, sharpness : time vs 480p+latent_upscale = 1 : 1): `refine="upscale"` (author's second pass) 1.6× : 1.8–3.5×;
-    native 768p turbo 1.6× : 2.5–3×; official 20-step native 2.6–5× : 6–7×. Default final = `refine="upscale"`; showcase = 20-step.
+  · Finals (R E3/E6/E7, sharpness : time vs 480p+latent_upscale = 1 : 1): `refine="upscale"` (author's second pass) 1.6× : 1.8–3.5×; native 768p turbo 1.6× : 2.5–3×; official 20-step native 2.6–5× : 6–7×. Default final = `refine="upscale"`; showcase = 20-step.
 - How to write a segment (official guide + published examples, `reference/research/20260909-human-vs-ai-h3-prompts.md` §3–4): `style` is
   prefixed to EVERY segment by the server, so keep weather and light out of it. Write motivated action with a change of feeling, as the official
   reference example does (“Her annoyance softens as she looks toward the Samoyed”, “with a playful tone and an easy conversational pace”);
   then one `Sound: …` sentence; then the `旁白:` / `别名:` lines. No `video_submit` section labels in a segment; no background music (promo48
   human ratings). Face-size / closed-lips / which-hand stage directions are not what published human prompts are made of; the server adds
   the closed-lips sentence for narration itself (official guide).
+- Plan → director in one call: `storyboard_direct(plan_id, seed=…, refine=…)` compiles a stored `storyboard_plan` (characters with `ref_image_url` → `<Picture N>` identity lock, dialogue → `<d>` lines, `transition: continue` → joined motion/audio) into ONE director job; poll `director_status`, fetch `director_fetch`; the film is judged whole afterwards (`video_review`), no per-shot retry (ruling: reference/research/20260909-director-n4n5-design-gpt6.md). When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
 - Packs: `director_pack_export(run_id)` → the node's own zip for the ComfyUI UI (导入导演包; runs before 0.7.7 cannot); `director_pack_import(pack_url|pack_asset)` → `pack_id` + what it would render; `director_pack_run(pack_id, seed=…, refine=…)` renders it as recorded.
-- When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
