@@ -1,7 +1,7 @@
 ---
 name: image-edit-and-reference
 description: Use to edit existing images, combine visual references, preserve character identity, transfer motion, or replace a subject in a video using the editing and reference capabilities available in the selected preset.
-verified_against: media-mcp 0.7.15 (2026-09-10)
+verified_against: media-mcp 0.7.16 (2026-09-10)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 8b503dfe5804cabe16db6718200c111583e9d4f62f0cde22ca6941a5fb676dc3
 ---
