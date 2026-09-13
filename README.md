@@ -50,7 +50,7 @@ rather than in any settings file you might commit.
 | | |
 |---|---|
 | Verified with Claude Code | **2.1.212** (real plugin loading and production MCP calls; minimum supported version not established) |
-| Verified against | **media-mcp 0.7.19** (`vagaa-media` 0.3.23: director_accept seam gate + storyboard_direct(review=); storyboard_status/fetch read director runs; per-shot ref2v enabled; director packs round-trip with reference videos; plan character references by asset id; `storyboard_direct` plan→one director job; director console `director_run`, characters table, `refine=latent_upscale`), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
+| Verified against | **media-mcp 0.7.20** (`vagaa-media` 0.3.24: Director rejects unknown/incompatible reference inputs; storyboard resume accepts run ID alone; director character references use ref2va while the older storyboard renderer's ref2v remains disabled; delivery, review and audio capability guidance clarified), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3`; no packages, no network access beyond your own gateways |
 

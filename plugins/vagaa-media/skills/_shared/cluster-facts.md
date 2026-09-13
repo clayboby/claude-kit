@@ -3,7 +3,7 @@
 Referenced by every `SKILL.md` under `.claude/skills/*` as `../_shared/cluster-facts.md`; its sha256 is stamped in each
 skill's front matter (`shared_facts_sha256`) and checked by `media-mcp/tools/skill_check.py` — edit HERE, then run
 `media-mcp/tools/skills_build.py --write`. Timings are measurements with a date; when they drift by more than 25 %,
-update the measurement with evidence. API/preset facts verified against media-mcp 0.7.19 (2026-09-13); earlier timings below are historical samples, not latency guarantees.
+update the measurement with evidence. API/preset contracts checked for media-mcp 0.7.20 (2026-09-13); earlier timings below are historical samples, not latency guarantees.
 
 ## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries)
 `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `music_submit`/`music_status`/`music_fetch`,
@@ -11,7 +11,7 @@ update the measurement with evidence. API/preset facts verified against media-mc
 `prompt_rewrite`/`prompt_get` (0.6.0), `assets_search`/`asset_get`/`asset_tag`, `storyboard_plan`/`storyboard_plan_get`/
 `storyboard_plan_update`/`storyboard_run`/`storyboard_direct`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `jobs_list`, `job_recover` (admin).
 Cloud-only, present only when the matching cloud entry is enabled (none is, 2026-09-06): `voice_enroll`, `compliance_review`/
-`compliance_status`, `lipsync`. If a tool is missing from the session, ask the user to run `/mcp` and reconnect `media-mcp`.
+`compliance_status`, `lipsync`. Missing tools may reflect cloud configuration, scope, surface or a planning-only restriction; verify the cause before asking for reconnection.
 
 ## Nodes and lanes (2026-09-06)
 - **comfy2 = spark-03** (lottery node): `draft` 5 s ≈ 2 min (4 s draft 115–126 s), Krea images ≈ 30 s (models reload every job);
@@ -32,7 +32,7 @@ Cloud-only, present only when the matching cloud entry is enabled (none is, 2026
 | `quality` | 1344×768, Base 20 | ≈11 min per 4 s | final only, one candidate at a time, never iterate |
 Cloud video presets (all `available: false` until keyed): `bailian-wan27`, `ark-seedance`, `kling-std`, `vidu-turbo`, `hailuo-23`, `veo-fast`, `flux3-draft`.
 Output is video WITH generated audio (speech, ambience). `video_status.progress` stays null on the ComfyUI lane: poll every 20–30 s.
-Lottery: `seeds=[...]` (≤ 8) or `n=k` → one job per seed spread over both nodes; reply `{batch, job_ids, jobs, nodes}`.
+`video_submit` lottery: `seeds=[...]` (≤ 8) or `n=k` → one job per seed; reply `{batch, job_ids, jobs, nodes}`. `storyboard_run` and `director_run` take one `seed`, not `seeds` or `n`.
 
 ## Image presets (Krea 2 via ComfyUI)
 `krea-default` 1024×1024, 8 steps, CFG 1, ≈15 s warm; `krea-169` 1344×768 for a 16:9 first frame (`nodes: [comfy2, comfy]`).
@@ -52,6 +52,7 @@ Shots 4–8 s (default 5, cap `max_shot_seconds` 6 in production), `target_secon
 continuity `fl2v` (default) | `guide` (experimental) | `cut`; ≈ 5 min per 5 s shot on `fast`, ≈ 13 min on `quality`; ≈ 1 h GPU per minute of film.
 - Director console (0.7.0, `director_run`): AIMixer MiniMaxH3 Director on both ComfyUI nodes; segment joins carry motion + audio (22-frame guide); draft 832×480 ≈ 2 min per 5 s segment, r2v/v2v (ref2va + 4-step LoRA) ≈ 75–180 s; media uploads go to every node; ≤ 24 segments, v2v = 1 segment; diffusion model int8_convrot on all H3 presets since 0.7.0. 0.7.1: `characters` table + dialogue shortcuts; `refine=latent_upscale` (LBH 3D latent upscaler on both nodes) → 1344×768 in the same job.
 0.6.0 does NOT route storyboard prompts through `prompt_rewrite`; the planner keeps its own renderer (`Style:`/`Location:` prefixes).
+`presets_list.storyboard.ref2v_enabled: false` applies to the older `storyboard_run` renderer, not all H3 references. `director_run` r2v and `storyboard_direct` character references use ref2va. `prompt_rewrite` coverage is a third, separate capability table. `director_run` has no `ref_videos` argument; raw graphs and imported packs require separate validation.
 
 ## Asset library and job states
 Every completed job is copied to MinIO and indexed (prompt, seed, preset, node, review score, tags). Stable URL

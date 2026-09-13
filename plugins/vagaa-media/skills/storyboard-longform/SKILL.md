@@ -1,9 +1,9 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.19 (2026-09-13)
+verified_against: media-mcp 0.7.20 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: e5ba93614250267957894c7887c0d228f9d82f3cbaf660e08f87302ad90df8cd
+shared_facts_sha256: 0a403c42e84651f84eed8528b2248d8698a3d0fb6f22c35f505689b531ce12f5
 ---
 Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
 
@@ -42,8 +42,8 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
 ## 3. Read the score table, then resume or redo
 - Each shot in `storyboard_status` / `storyboard_fetch` has `review_overall` (Qwen vision 1–5), `attempts`, `seam_ssim` / `seam_ok`, `drop_frames`,
   `below_threshold`, `notes`. A `below_threshold: true` shot was kept as the best of its attempts: read `review_summary`, fix that shot's prompt in the
-  plan, and rerun only it with `storyboard_run(plan_id, resume_run_id=<run>)` (finished shots are reused; to force a redo of a done shot, change its
-  `seconds` or edit it into a new plan). `seams_cut` lists continuations downgraded to hard cuts because the seam did not match.
+  plan using `storyboard_plan_update`, then resume the latest run. Changed shot fingerprints render again; unchanged completed shots are reused.
+  Continuity may invalidate downstream shots too; a low score alone does not force a redo. `seams_cut` lists continuations downgraded to hard cuts.
 - **Interrupted runs**: `storyboard_run(resume_run_id=<run>)` ALONE continues after a restart / timeout — done shots reused, an in-flight backend job
   adopted; a run is continued at most once. `blocked` is not terminal: the reply names the shot job and the actions; `submission_unknown` /
   `cancel_pending` / `cancel_unconfirmed` need `job_recover` by a person (see `media-production`) before a resume is accepted.
@@ -51,18 +51,16 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
 
 ## 4. Assemble and deliver
 `storyboard_fetch(run_id)` → final mp4 URL (presigned) + per-shot clip / last-frame URLs + `asset_id` / `asset_url` per shot + `report{duration_s,
-frames, retries}`. Hand the stable asset URLs on. Trimming, re-ordering, overlaying music or burning subtitles after assembly is not exposed as a
-tool in 0.6.0 (a compose / loudnorm chain is a 0.6.1 candidate): say so and hand the per-shot clips to the user's editor instead of improvising.
+frames, retries}`. Deliver the unchanged presigned `url`, retain asset/job IDs, and star or collect keepers. Stable `asset_url` needs authentication.
+Trimming, re-ordering, mixing or subtitles have no dedicated MCP tool: provide source clips or use an explicitly verified editing workflow.
 
 ## 6. Director console (`director_run`, 0.7.0) — the default for multi-segment work
 One job renders a whole plan through the community MiniMaxH3 Director node (installed on both ComfyUI nodes): segments continue motion AND
-audio across joins (22-frame guide window), and every input type is accepted in the same call.
+audio across joins (22-frame guide window). Choose one compatible timeline kind; different reference modes are not interchangeable.
 ```
 director_run(segments=[
-  {"prompt": "<H3-grammar or plain English>", "seconds": 5},                                   # t2v
-  {"prompt": "...", "seconds": 4, "first_frame": "as-…|job-id|https://…", "last_frame": "…"},   # fl2v (first only = i2v)
-  {"prompt": "<Picture 1> <Audio 1> …", "seconds": 5, "ref_images": ["as-…"], "ref_audios": ["as-…"]},  # r2v (≤9 images, ≤3 audios)
-  {"prompt": "keep the motion of <Video 1>, …", "seconds": 5, "source_video": "as-…"}          # v2v (exactly one segment per plan)
+  {"prompt": "The courier approaches the counter. Sound: quiet footsteps.", "seconds": 5},
+  {"prompt": "The courier places one envelope on the counter. Sound: paper rustle.", "seconds": 5}
 ], style="Live-action, cinematic.", width=832, height=480, seed=None, continuity=True, idempotency_key="<your plan id>")
 → {run_id, task, segments[{idx, mode, frames, seconds}], total_frames, seconds, seed, uploads[]}
 director_status(run_id) → queued|running|completed|failed|lost ; director_fetch(run_id) → url / asset_id / asset_url
@@ -71,6 +69,7 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 - `mode` is inferred from the media given. One plan is one timeline kind: t2v segments may sit beside fl2v OR r2v ones, but fl2v and r2v
   cannot share a plan and v2v is always alone (the call is rejected with `invalid_argument`, nothing is uploaded). An explicit mode
   without its media (r2v with no refs, fl2v with no frame) is rejected too — the node would silently fall back to plain t2v.
+- fl2v uses `first_frame`/`last_frame`; r2v uses `ref_images` (≤9)/`ref_audios` (≤3); v2v uses `source_video`. Unknown fields and incompatible reference fields are rejected. `ref_videos` is not supported; never silently replace it with a v2v source.
 - Seconds snap UP to H3's 17k+5 frame grid (5 s → 124 frames, 4 s → 107); 0.2–15 s per segment. Keep a plan ≤ 24 segments.
 - v2v takes its length from the source (ffprobe), not from `seconds`; sources over 362 frames (~15 s) are rejected: trim first.
 - Draft = 832×480 (default). Final = width 1344, height 768 — same call, ~4× the time. Never iterate prompts on a final.
@@ -100,8 +99,8 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 - How to write a segment (official guide + published examples, `reference/research/20260909-human-vs-ai-h3-prompts.md` §3–4): `style` is
   prefixed to EVERY segment by the server, so keep weather and light out of it. Write motivated action with a change of feeling, as the official
   reference example does (“Her annoyance softens as she looks toward the Samoyed”, “with a playful tone and an easy conversational pace”);
-  then one `Sound: …` sentence; then the `旁白:` / `别名:` lines. No `video_submit` section labels in a segment; no background music (promo48
-  human ratings). Face-size / closed-lips / which-hand stage directions are not what published human prompts are made of; the server adds
-  the closed-lips sentence for narration itself (official guide).
+  then the required sound and dialogue. Choose music, silence and shot direction from the current brief; a previous promo's preference is not universal.
+  No dialogue, no music and silence are different constraints. Preserve deliberate hand/object and framing requirements; avoid conflicting instructions.
+  The server adds the closed-lips sentence for narration. Review actual action and audio separately from sampled-image scores.
 - Plan → director in one call: `storyboard_direct(plan_id, seed=…, refine=…)` compiles a stored `storyboard_plan` (characters with `ref_image_url` = an asset id `as-…` from image_fetch / assets_search (a job id or allowlisted URL also works; presigned `url`s expire, `asset_url` is refused) → `<Picture N>` identity lock, dialogue → `<d>` lines, `transition: continue` → joined motion/audio) into ONE director job; poll `director_status`, fetch `director_fetch`; the film is judged whole afterwards: `storyboard_direct(review="gate")` then `director_accept(run_id)` measures every segment boundary (fail = a jump > 3× the median frame difference, E10 `tools/evals/hypotheses-20260909/RESULTS.md`) and hands back `retry.seed`; resubmit with it — seams are a draw, not a setting; no per-shot retry (ruling: reference/research/20260909-director-n4n5-design-gpt6.md). When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
 - Packs: `director_pack_export(run_id)` → the node's own zip for the ComfyUI UI (导入导演包; runs before 0.7.7 cannot); `director_pack_import(pack_url|pack_asset)` → `pack_id` + what it would render; `director_pack_run(pack_id, seed=…, refine=…)` renders it as recorded.

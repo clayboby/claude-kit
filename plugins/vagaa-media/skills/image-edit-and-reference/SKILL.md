@@ -1,9 +1,9 @@
 ---
 name: image-edit-and-reference
-description: Use to edit existing images, combine visual references, preserve character identity, transfer motion, or replace a subject in a video using the editing and reference capabilities available in the selected preset.
-verified_against: media-mcp 0.7.19 (2026-09-13)
+description: Use to plan image changes, animate images, preserve character references, and select supported reference or video-to-video routes; check the current capability table before promising edits, motion transfer or subject replacement.
+verified_against: media-mcp 0.7.20 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: e5ba93614250267957894c7887c0d228f9d82f3cbaf660e08f87302ad90df8cd
+shared_facts_sha256: 0a403c42e84651f84eed8528b2248d8698a3d0fb6f22c35f505689b531ce12f5
 ---
 
 # Images, references and identity — current gateway contracts
@@ -36,9 +36,9 @@ Cross-shot identity is a planning problem: pass one `characters={name: {"appeara
 shot; continuity `fl2v` carries the last frame into the next shot. That whole flow is `storyboard-longform`; do not chain `video_submit` by hand.
 
 ## 3. Reviewing an edit or a reference-based result
-`image_review(source, rubric=..., prompt=...)` scores prompt consistency, composition, artifacts, style, usability. For "only change X" requests the
-reviewer must SEE the original: pass the original prompt / a description of what had to stay unchanged in `prompt=`, and compare the two images yourself;
-a high score on the edited image alone does not prove the unrequested regions were preserved.
+`image_review(source, rubric=..., prompt=...)` scores prompt consistency, composition, artifacts, style, usability from one result image. `prompt=`
+provides text constraints, not a second image. For "only change X", inspect the original and result side by side separately; a single-image score
+does not prove the unrequested regions were preserved. Report when the comparison was not possible.
 
 ## 4. Raw graphs (`workflow_submit`) as the escape hatch
 `workflow_submit(graph_json, overrides)` runs a ComfyUI API-format graph as-is (scope `workflow.raw`); `workflow_status` / `workflow_fetch` return every

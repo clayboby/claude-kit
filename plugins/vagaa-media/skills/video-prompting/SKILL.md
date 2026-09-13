@@ -1,9 +1,9 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.7.19 (2026-09-13)
+verified_against: media-mcp 0.7.20 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: e5ba93614250267957894c7887c0d228f9d82f3cbaf660e08f87302ad90df8cd
+shared_facts_sha256: 0a403c42e84651f84eed8528b2248d8698a3d0fb6f22c35f505689b531ce12f5
 ---
 
 Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
@@ -25,10 +25,10 @@ non_diegetic_music: <1-3 sentences: instruments, tempo, dynamics; or N/A>
   `(S1) The vendor says warmly: <d>[Chinese] 来,刚烤好的,趁热吃</d>`, `(S2) She whispers: <d>[English] Don't look back.</d>`.
   Copy the line character for character (same punctuation, same spaces, no translation). Stable ids `S1`, `S2`, … for speakers only.
 - **Visible text** (sign, label, title card) goes in English double quotes: `a neon sign reads "OPEN 24H"`. Nothing else goes in quotes:
-  quoted dialogue was burned in as subtitles in the 2026-09-05 A/B sample (raw 3.0 vs rewritten 4.3). Do not mention subtitles/captions unless asked.
+  quoted dialogue was burned in as subtitles in a 2026-09-05 sample. Avoiding quotes is a risk reduction, not a guarantee that no text appears; inspect the output.
 - Off-screen voice: `<name> says in an off-screen voiceover: <d>[...] ...</d>` and note that the visible lips stay closed.
-- Only `<d>`, `<scenetrans>`, `<cutoff>` are tags; anything else in angle brackets is an error. Description in English; dialogue keeps its language.
-- Chinese and English dialogue are covered. A line in another script (Japanese, Korean, Cyrillic, …) is refused with `unsupported_language`.
+- Base-mode control tags are `<d>`, `<scenetrans>`, `<cutoff>`; reference mode also uses `<Picture N>`, `<Audio N>`, `<Video N>` bindings. Read the official reference guide for r2v and check the gateway accepts that media kind. Description in English; dialogue keeps its language.
+- The gateway `prompt_rewrite` profile covers Chinese/English dialogue and rejects other scripts with `unsupported_language`; this is not a statement that direct H3 generation supports only those languages.
 
 ## 2. Rewrite instead of guessing: `prompt_rewrite`
 ```
