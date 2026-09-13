@@ -4,7 +4,8 @@
 # Emits the stable asset-library URLs of whatever was just fetched as
 # hookSpecificOutput.additionalContext — a PostToolUse hook's plain stdout does
 # NOT reach the model, only that field does. The transcript then keeps the
-# permanent /assets/<id> link rather than the 24h presigned one.
+# stable /assets/<id> record rather than treating a 24h presigned link as permanent.
+# The record still needs authorization and is subject to asset retention.
 #
 # A tool response is remote data. Only URLs that are http(s), share the exact
 # origin of the configured gateway, and whose path is /assets/<id> are relayed;
@@ -54,7 +55,10 @@ def origin(url):
     host = (parts.hostname or "").lower()
     if not host:
         return None
-    port = str(parts.port) if parts.port else DEFAULT_PORTS[scheme]
+    try:
+        port = str(parts.port) if parts.port else DEFAULT_PORTS[scheme]
+    except ValueError:
+        return None
     return scheme + "://" + host + ":" + port
 
 
@@ -111,7 +115,7 @@ for url in candidates:
         continue
     if any(seg in (".", "..") for seg in parts.path.split("/")):
         continue
-    line = "作品已入库:" + url
+    line = "作品记录（需鉴权；浏览器请用 fetch 的 url）:" + url
     cost = len(line.encode("utf-8")) + 1
     if cost > budget:
         break

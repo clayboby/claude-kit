@@ -1,9 +1,9 @@
 ---
 name: media-production
 description: Use to search or review media assets, create standalone images or video clips, or generate speech and translations through media-mcp; coordinate the draft, review, and final workflow and load specialist skills when needed.
-verified_against: media-mcp 0.7.16 (2026-09-10)
+verified_against: media-mcp 0.7.18 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 8b503dfe5804cabe16db6718200c111583e9d4f62f0cde22ca6941a5fb676dc3
+shared_facts_sha256: c4c365c20ef4c0e3dde5f6f161d18e5154dd943fbb50b3d4ece2e49b269d8684
 ---
 
 # Media production on the cluster (core loop)
@@ -12,15 +12,15 @@ All media work goes through the `media-mcp` MCP server. Node timings, preset tab
 `../_shared/cluster-facts.md` — read it once per task, do not restate numbers from memory. Specialist skills: `video-prompting`
 (writing / rewriting / A/B-testing a video prompt), `storyboard-longform` (multi-shot films, continuity, resume, assembly),
 `image-edit-and-reference` (references, identity, edits), `music-and-sfx` (BGM, SFX, levels). This skill owns the loop
-itself plus speech, translation, the asset library and job recovery.
+itself plus speech, translation, the asset library and job recovery. Invoke specialists by the name in the harness skill listing (plugin installs use `vagaa-media:<name>`); loading this core skill does not load their bodies.
 
 ## 1. Search the library before generating
 - `assets_search(query="teapot steam", since="30d")`, `assets_search(query="seed:101 preset:draft")`, `assets_search(tags=["hero"], starred=true)`,
-  `assets_search(min_score=4)`. Each hit has a STABLE `url` and a `thumb_url`; nothing expires the way presigned links do.
+  `assets_search(min_score=4)`. Each hit has a stable authenticated `url` and `thumb_url`; URL stability does not prevent asset expiry.
 - `asset_get(asset_id)` returns the record + the job (prompt, seed, params, and since 0.6.0 `params.prompt_id` when the prompt came from
   `prompt_rewrite`) — enough to re-submit the same seed on a final preset without guessing. `presign=true` adds a 24 h URL.
 - `asset_tag(asset_id, add=["hero","ep1"], starred=true, collection="game-art")` marks keepers; untagged drafts expire after 7 days.
-- `asset_feedback_get(asset_id)` (0.5.1, needs `jobs.read`) returns the HUMAN verdict the operator gave in the console (`rating` good / ok / bad, reason tags, note, every rater, the history with a job-side snapshot); `assets_search(rating="bad")` lists the failure-case set, `rating="none"` what nobody rated yet. Prefer works rated `good` as references.
+- `asset_feedback_get(asset_id)` (needs `jobs.read`) returns HUMAN ratings entered in the console; `assets_search(rating="bad")` lists rated failures, `rating="none"` unrated work. Empty ratings mean no human feedback, not poor quality. Machine review uses separate scores.
 - A good hit ends the task: do not regenerate what the library already holds unless the user asks for a new take.
 
 ## 2. The loop: draft → review → final
@@ -31,17 +31,18 @@ itself plus speech, translation, the asset library and job recovery.
    Prompt text: write it yourself (see `video-prompting`) or pass `prompt_id` from `prompt_rewrite`; `rewrite="auto"` on `draft` runs the
    deterministic check + rewrite for you and FAILS the call (nothing generated) when no valid prompt comes out. Leave `rewrite` unset to send
    your words untouched (the pre-0.6.0 behaviour). Optional `idempotency_key` makes a retried call replay the first answer instead of paying twice.
-2. **Review, don't eyeball.** `video_review(job_id)` / `image_review(job_id)` → five 1–5 scores + `overall` + one suggestion from the Qwen vision
+2. **Review.** `video_review(source=job_id)` / `image_review(source=job_id)` → five 1–5 scores + `overall` + one suggestion from the Qwen vision
    lane; iterate until the bar you set (3.5 is the storyboard gate) is met. `reverse_prompt(source, style="h3"|"sd"|"plain")` describes an image.
 3. **Final with the same seed.** Re-submit the approved text with the SAME seed on `fast` (everyday) or `quality` (one candidate, never iterate);
    a `prompt_id` written for `draft` is accepted unchanged on `fast`/`daily`/`quality` (same 5 s); anything else is refused, never re-rewritten.
-4. **Fetch once.** `video_fetch(job_id)` → presigned URL + `asset_id` + stable `asset_url`; hand the stable URL on.
+4. **Deliver.** `video_fetch(job_id)` → `url` (temporary browser link), `asset_id`, authenticated stable `asset_url`. Give the user `url` unchanged; keep `asset_id`/`job_id` for reuse. Save an approved deliverable with `asset_tag(asset_id, starred=true)` or a collection; an unstarred draft may expire after 7 days. Media input and link contracts: `../_shared/media-inputs.md`.
 Images: `image_submit(prompt, preset="krea-default", seed, width, height)`; `krea-169` for a 16:9 first frame; poll `image_status(job_id)`, then `image_fetch(job_id)`.
 Raw ComfyUI graphs: `workflow_submit(graph_json, overrides)` → `workflow_status` / `workflow_fetch` — ask the operator for a template first.
 
 ## 3. Speech and translation (synchronous, this skill's job)
 - `tts(text, voice, lang)` → WAV asset. Voices are presets (`presets_list` → `tts_voices`): `default`, `calm`, `news`, `story-female`,
-  `story-male`, `energetic`; ask for a new preset rather than inventing parameters. ≤ 4000 chars per call, one call per scene.
+  `story-male`, `energetic`; two additional cloud voices are listed but unavailable. Current production cap: 2000 characters per call; split longer speech by scene/sentence.
+  Speed and warm-up options are not MCP parameters; inspect the TTS schema and live presets.
 - `translate(text, dst="en", src=None)` via Hy-MT2; `dst` is the target language (default zh).
 - Voice cloning (`voice_enroll`) and lip-sync (`lipsync`) are cloud-only tools that appear only when their entry is keyed — today none is.
 
@@ -49,7 +50,7 @@ Raw ComfyUI graphs: `workflow_submit(graph_json, overrides)` → `workflow_statu
 - `jobs_list(limit, service, status)` for an overview; `presets_list` for the live presets / voices / models / cloud entries (`available` flag).
 - `job_recover(job_id, action=attach|resubmit|abandon, backend_id)` (admin) resolves `submission_unknown`, `cancel_pending`,
   `cancel_unconfirmed`. **Never just re-submit such a job** — the node may be generating it; check the node, then attach / resubmit / abandon.
-- Cloud presets (`presets_list` shows `cloud: true`): money. No lottery without being asked; a missing key is not retried.
+- Cloud presets have `cloud: true` and `available` on each video/image/music/voice entry; there is no required top-level `cloud` section. A disabled entry is not callable. Follow the user's budget for paid generations.
 - `compliance_review(source)` / `compliance_status(job_id)` = the licensed publish gate (cloud, only when keyed).
 
 ## 5. Etiquette

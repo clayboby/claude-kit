@@ -1,10 +1,12 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.7.16 (2026-09-10)
+verified_against: media-mcp 0.7.18 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 8b503dfe5804cabe16db6718200c111583e9d4f62f0cde22ca6941a5fb676dc3
+shared_facts_sha256: c4c365c20ef4c0e3dde5f6f161d18e5154dd943fbb50b3d4ece2e49b269d8684
 ---
+
+Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
 
 # Writing video prompts for MiniMax-H3 (single clip)
 
@@ -60,7 +62,7 @@ prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset":
 
 ## 4. A/B two prompts honestly
 Same preset, same `seconds`, same `seed`, submitted back to back so both land on the same node when possible (check `backend` in each job); review both
-with `video_review(job_id, prompt=<the original brief>)` so the reviewer sees the same brief, not the candidate text. One seed is a lead, not a
+with `video_review(source=job_id, prompt=<the original brief>)` so the reviewer sees the same brief, not the candidate text. One seed is a lead, not a
 statistic — `media-mcp/tools/prompt_ab.py` runs the paired protocol (random order, blinded review, hard generation cap); report deltas per brief.
 
 ## 6. Multi-segment or media-driven clips: hand the plan to `director_run` (0.7.0)

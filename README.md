@@ -11,7 +11,7 @@ Inside Claude Code (any project):
 /plugin install vagaa-media@claude-kit
 ```
 
-Or from a terminal, non-interactive (fills the options in one go — the token goes to the OS keychain, never a file):
+Or from a terminal, non-interactive (fills the options in one go; sensitive values use the OS keychain where supported, with a credentials-file fallback):
 
 ```bash
 claude plugin marketplace add clayboby/claude-kit
@@ -23,7 +23,7 @@ claude plugin list          # shows version + enabled
 ```
 
 Then start Claude Code and check: `/mcp` lists `media` as connected, and asking "list the media tools you have" returns
-video / image / music / tts / storyboard / director tools. The session-start hook prints the gateway version it verified.
+video / image / music / tts / storyboard / director tools. The session-start hook reports connection or configuration problems and stays silent when its probes pass.
 
 ### Update
 
@@ -32,10 +32,10 @@ claude plugin marketplace update claude-kit      # refresh the catalog
 claude plugin update vagaa-media@claude-kit      # e.g. 0.3.7 -> 0.3.8; restart Claude Code to apply
 ```
 
-Skills carry a `verified_against: media-mcp <version>` stamp; the session-start hook warns when the gateway is newer than the skills.
+Skills carry a `verified_against: media-mcp <version>` stamp. Check it against the deployed service when upgrading; the session-start hook checks reachability and authentication, not version drift.
 
-Nothing in this repository contains an address, a token or a hostname of a private deployment: every
-plugin reads its endpoints and credentials from `userConfig` at install time. Credentials are
+Each plugin reads its connection endpoint and credentials from `userConfig` at install time. Packaged
+skills include facts from the deployment they were verified against; check the live service before reusing them. Credentials are
 declared `sensitive`, so Claude Code keeps them in the OS keychain (or `~/.claude/.credentials.json`)
 rather than in any settings file you might commit.
 
@@ -49,8 +49,8 @@ rather than in any settings file you might commit.
 
 | | |
 |---|---|
-| Requires Claude Code | **≥ 2.1.259** |
-| Verified against | **media-mcp 0.7.16** (`vagaa-media` 0.3.21: director_accept seam gate + storyboard_direct(review=); storyboard_status/fetch read director runs; per-shot ref2v enabled; director packs round-trip with reference videos; plan character references by asset id; `storyboard_direct` plan→one director job; director console `director_run`, characters table, `refine=latent_upscale`), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
+| Verified with Claude Code | **2.1.212** (real plugin loading and production MCP calls; minimum supported version not established) |
+| Verified against | **media-mcp 0.7.18** (`vagaa-media` 0.3.22: director_accept seam gate + storyboard_direct(review=); storyboard_status/fetch read director runs; per-shot ref2v enabled; director packs round-trip with reference videos; plan character references by asset id; `storyboard_direct` plan→one director job; director console `director_run`, characters table, `refine=latent_upscale`), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3`; no packages, no network access beyond your own gateways |
 
@@ -65,7 +65,7 @@ them later. Every value stays on your machine.
 |---|---|---|---|
 | `media_mcp_url` | yes | `https://media.example.com/mcp` | Streamable-HTTP MCP endpoint of your media gateway. Also the only origin the asset-link hook will relay a URL from |
 | `media_mcp_token` | yes, sensitive | — | Bearer token for the gateway |
-| `surface` | no, default `standard` | `compact` | Which tool surface the URL points at. Documentation and a session-start note only. media-mcp 0.3.x serves only the standard surface; set `compact` once 0.5 ships `/mcp-compact` |
+| `surface` | no, default `standard` | `compact` | Which tool surface the URL points at. Documentation and a session-start note only. The verified deployment serves `/mcp` only; no compact-surface release date is promised |
 
 ### vagaa-web-evidence
 

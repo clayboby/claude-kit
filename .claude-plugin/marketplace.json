@@ -5,14 +5,14 @@
     "name": "clayboby",
     "url": "https://github.com/clayboby"
   },
-  "description": "Claude Code plugins maintained by clayboby. Every plugin reads its endpoints and credentials from userConfig at install time, so no address or token of a private deployment is ever published here.",
+  "description": "Claude Code plugins maintained by clayboby. Connection endpoints and credentials come from userConfig; packaged skills document the deployments they were verified against.",
   "plugins": [
     {
       "name": "vagaa-media",
       "displayName": "Vagaa Media",
       "source": "./plugins/vagaa-media",
       "description": "Produce video, images, music, speech and translations through your own media gateway, with an asset library, a vision review gate and a storyboard pipeline for long video.",
-      "version": "0.3.21",
+      "version": "0.3.22",
       "author": {
         "name": "clayboby",
         "url": "https://github.com/clayboby"
@@ -36,7 +36,7 @@
       "displayName": "Vagaa Web Evidence",
       "source": "./plugins/vagaa-web-evidence",
       "description": "Free-first public-web search and page extraction through your own evidence router: one call per turn, citations only from extracted bodies, no paid provider without asking.",
-      "version": "0.3.5",
+      "version": "0.3.6",
       "author": {
         "name": "clayboby",
         "url": "https://github.com/clayboby"

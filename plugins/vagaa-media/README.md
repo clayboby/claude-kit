@@ -4,25 +4,25 @@ Claude Code plugin for a self-hosted **media gateway**: generate video, images, 
 translations, keep every result in an asset library, gate them on a vision review, and assemble long
 video through a storyboard pipeline.
 
-The plugin ships no address and no credential. The endpoint and the token are `userConfig` values you
-fill in at install time; the token is `sensitive`, so Claude Code stores it in your OS keychain (or
+The connection endpoint and token are `userConfig` values you fill in at install time. Packaged skills
+include facts from their verified deployment; the token is `sensitive`, so Claude Code stores it in your OS keychain (or
 `~/.claude/.credentials.json`) rather than in a settings file you might commit.
 
 ## Compatibility matrix
 
 | | |
 |---|---|
-| Requires Claude Code | **≥ 2.1.259** (anchored hook matchers, `hookSpecificOutput.additionalContext`, `userConfig` env injection, hyphen-preserving MCP tool names) |
-| Verified against | **media-mcp 0.3.5** |
+| Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks, skill loading and production MCP calls with hyphen-preserving tool names; minimum supported version not established) |
+| Verified against | **media-mcp 0.7.18** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3` (no packages) |
-| Tool surface | media-mcp 0.3.5 serves the **standard** surface only (`/mcp`, 28 tools). The compact surface (`/mcp-compact`) arrives in media-mcp 0.5; until then set `surface=standard` |
+| Tool surface | media-mcp 0.7.18 serves the **standard** surface only (`/mcp`, 40 tools). `/mcp-compact` is not deployed; use `surface=standard` |
 
 ## What you get
 
 | Component | What it does |
 |---|---|
-| MCP server `media` | `video_*`, `image_*`, `music_*`, `workflow_*`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search` / `asset_get` / `asset_tag`, `storyboard_*`, `presets_list`, `jobs_list` — 28 tools on the standard surface |
+| MCP server `media` | `video_*`, `image_*`, `music_*`, `workflow_*`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search` / `asset_get` / `asset_tag`, `storyboard_*`, `presets_list`, `jobs_list` — 40 tools on the standard surface |
 | Skill `media-production` | The loop: search the library first, draft cheaply, review with the vision model, render the final on the same seed; speech, translation, the asset library and job recovery |
 | Skill `video-prompting` | Write, rewrite (`prompt_rewrite`), diagnose or A/B a single-clip video prompt — dialogue, on-screen text, references; produces text or a `prompt_id`, never generates by itself |
 | Skill `storyboard-longform` | Multi-shot films: plan, continuity, resume, assembly (`storyboard_*`) |
@@ -48,7 +48,7 @@ fill in at install time; the token is `sensitive`, so Claude Code stores it in y
 |---|---|---|---|
 | `media_mcp_url` | string, required | `https://media.example.com/mcp` | Streamable-HTTP MCP endpoint. Also the only origin the asset-link hook will relay a URL from |
 | `media_mcp_token` | string, required, **sensitive** | — | Bearer token. Prefer a short-lived token scoped to the capabilities you actually use |
-| `surface` | string, default `standard` | `compact` | Which surface the URL points at. Documentation and a session-start note only — it never rewrites the URL. media-mcp 0.3.x serves only the standard surface; set `compact` once 0.5 ships `/mcp-compact` |
+| `surface` | string, default `standard` | `compact` | Which surface the URL points at. Documentation and a session-start note only — it never rewrites the URL. The verified deployment serves `/mcp` only; no compact-surface release date is promised |
 
 The URL becomes the MCP server's `url` and the token its `Authorization: Bearer …` header. Nothing
 else is sent. Tools appear as `mcp__plugin_vagaa-media_media__<tool>`.
@@ -66,7 +66,7 @@ or any part of the response, writes no file, and always exits 0 — a down gatew
 session. The token reaches curl through a config file on stdin, so it is not visible in `ps`.
 
 **`PostToolUse` → `scripts/asset-notify.sh`,** matcher anchored to
-`^mcp__plugin_vagaa-media_media__(video_fetch|image_fetch|music_fetch|storyboard_fetch)$`. A tool
+`^mcp__(plugin_vagaa-media_media|media)__(video_fetch|image_fetch|music_fetch|storyboard_fetch|director_fetch|workflow_fetch)$`. This covers the bundled plugin server and a manually configured server named `media`. A tool
 response is remote data, so a URL is relayed only when it is `http`/`https`, has no userinfo, query
 or fragment, shares the **exact** origin (scheme, host and port) of the configured gateway, and has
 a path matching `^/assets/[A-Za-z0-9_-]{6,64}(/.*)?$` with no `.` or `..` segments. Any control
@@ -74,15 +74,18 @@ character rejects the URL. At most 5 URLs and 1 KB reach the conversation, as on
 document:
 
 ```json
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"作品已入库:https://…/assets/<id>"}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"作品记录（需鉴权；浏览器请用 fetch 的 url）:https://…/assets/<id>"}}
 ```
 
 That field is the only PostToolUse output a model actually reads — a hook's plain stdout does not
-reach it. The point is that the transcript keeps the **stable** library URL, not the 24-hour
-presigned one.
+reach it. The transcript keeps the **stable** library record URL, which still requires authorization and remains subject to asset retention. Give the user the fetch response's temporary `url` unchanged for browser access, and preserve approved drafts with a star or collection.
 
 Both hooks unset every `CLAUDE_PLUGIN_OPTION_*` variable whose name looks like a credential before
 starting `python3`, so only the gateway URL crosses into the child process.
+
+## Connection troubleshooting
+
+The session-start probe uses `curl`; MCP connections use Claude Code's runtime. A successful probe does not prove that the runtime can use the same network route. Check `/mcp` and make a real `presets_list` call. If your network uses an HTTP proxy, configure `HTTPS_PROXY` and `HTTP_PROXY` in the launch environment or `settings.json` → `env`, as described in [Claude Code network configuration](https://code.claude.com/docs/en/corporate-proxy). Keep TLS verification enabled and use the original gateway URL.
 
 ## Update
 

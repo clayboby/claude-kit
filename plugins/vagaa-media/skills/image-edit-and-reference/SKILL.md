@@ -1,36 +1,35 @@
 ---
 name: image-edit-and-reference
 description: Use to edit existing images, combine visual references, preserve character identity, transfer motion, or replace a subject in a video using the editing and reference capabilities available in the selected preset.
-verified_against: media-mcp 0.7.16 (2026-09-10)
+verified_against: media-mcp 0.7.18 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 8b503dfe5804cabe16db6718200c111583e9d4f62f0cde22ca6941a5fb676dc3
+shared_facts_sha256: c4c365c20ef4c0e3dde5f6f161d18e5154dd943fbb50b3d4ece2e49b269d8684
 ---
 
-# Images, references and identity — what 0.6.0 can and cannot do
+# Images, references and identity — current gateway contracts
 
 Read this section first: it is the honest capability table. Facts (presets, nodes, timings): `../_shared/cluster-facts.md`.
 
-| need | available now (0.6.0) | how |
+| need | available now | how |
 |---|---|---|
 | describe an existing image to re-create or vary it | yes | `reverse_prompt(source, style="sd")` → `image_submit`; `style="h3"` → `video_submit`; `style="plain"` → prose |
 | a new image in a chosen composition / size | yes | `image_submit(prompt, preset="krea-default"|"krea-169", seed, width, height)` → `image_review` |
-| animate an existing image (image-to-video) | yes | `video_submit(prompt, image_url=<allow-listed URL or asset url>, preset="draft", seed)`; `prompt_rewrite` does NOT cover i2v — write the prompt by hand (`video-prompting` §1) |
+| animate an existing image (image-to-video) | yes | `video_submit(prompt, image_url=<allowlisted HTTP(S) URL>, preset="draft", seed)`; for an asset ID use `director_run` with segment `first_frame`. `prompt_rewrite` does not cover i2v |
 | keep a character stable across shots of one film | yes (planner) | `storyboard-longform`: the same `characters` sheet in every shot |
-| instruction-based image editing, multi-reference composition, outfit swap | **not exposed** | Qwen-Image-Edit weights are on the cluster but the image-edit tool ships in 0.6.1; `workflow_submit` with an operator-provided graph is the only route today |
-| reference-driven video (character / voice lock, ref2v) | **not exposed** | H3 ref2v weights exist, the preset is off (`ref2v_enabled: false`); any `references` to `prompt_rewrite` is refused (`unsupported_references`) |
-| motion transfer / subject replacement in a video | **not exposed** | Wan Animate 2 / SCAIL-2 are 0.6.1 candidates (a video-animate tool); do not promise them |
-| upload a user file as a reference | **not exposed** | an upload tool is 0.6.1; today a reference must already be an asset (`assets_search`) or on an allow-listed host |
+| instruction-based image editing / multi-reference image composition | **no dedicated tool** | `workflow_submit` can run an existing verified graph; model weights alone do not provide an image-edit API. No release date is promised |
+| reference-driven video (character / voice references) | yes, director | `director_run` segment `ref_images` / `ref_audios` or its character table; see `storyboard-longform`. This does not extend `prompt_rewrite` to reference modes |
+| video-to-video using an existing clip | yes, director | A single `director_run` v2v segment with `source_video`; this is not a dedicated motion-transfer / subject-swap API |
+| upload a local user file | **no dedicated tool** | A gateway asset or allowlisted URL is required. Report this input gap; do not claim a filesystem path or data URI was accepted |
 
-When a row says "not exposed": tell the user plainly, offer the nearest available route (often `reverse_prompt` + a new generation, or a hand-built
+When a row says "no dedicated tool": tell the user plainly, offer the nearest available route (often `reverse_prompt` + a new generation, or a hand-built
 ComfyUI graph via `workflow_submit` with the operator's template), and record the gap; never fake the result with a different tool.
 
 ## 1. Reference images that ARE supported
-- Sources: an `asset_id` / stable asset URL from the library, or a URL on the allow-list (`MEDIA_MCP_FETCH_ALLOWED_HOSTS`); other hosts are refused
-  with `invalid_argument`. Presigned MinIO links expire after 24 h — hand stable URLs around, not presigned ones.
+- Accepted sources differ by tool: read `../_shared/media-inputs.md` when moving media between tools. Director accepts asset IDs; review takes job IDs or allowlisted URLs; `video_submit.image_url` requires a URL. An unsigned stable asset URL is not a universal media input.
 - `reverse_prompt(source=<job_id or URL>, style="sd", lang="en"|"zh")` returns a tag prompt + `negative_prompt` for Krea; keep the seed discipline
   (`seed` fixed, iterate on the prompt) so a re-generation is comparable to the reference.
 - Image-to-video: `video_submit(image_url=...)` uses the H3 i2v path; keep `seconds` at 5 for drafts and describe the MOTION, not the picture
-  (the frame already carries the look). Review with `video_review(job_id)`; the reviewer sees frames only, so mention the reference in `prompt=`.
+  (the frame already carries the look). Review with `video_review(source=job_id)`; the reviewer sees frames only, so mention the reference in `prompt=`.
 
 ## 2. Identity across a film (delegated)
 Cross-shot identity is a planning problem: pass one `characters={name: {"appearance": ...}}` sheet to `storyboard_plan` and keep names identical in every

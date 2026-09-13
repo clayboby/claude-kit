@@ -1,13 +1,13 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.16 (2026-09-10)
+verified_against: media-mcp 0.7.18 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 8b503dfe5804cabe16db6718200c111583e9d4f62f0cde22ca6941a5fb676dc3
+shared_facts_sha256: c4c365c20ef4c0e3dde5f6f161d18e5154dd943fbb50b3d4ece2e49b269d8684
 ---
+Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
-
 Anything longer than one 15 s clip goes through the storyboard tools (plan → run → status → fetch), not through hand-chained `video_submit`.
 Facts (shot limits, timings, review gate, continuity modes): `../_shared/cluster-facts.md`. Single-clip prompt wording: `video-prompting`.
 Reference images / identity across shots is split: cross-shot continuity is this skill; reference-driven generation is `image-edit-and-reference`.
@@ -47,7 +47,7 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
 - **Interrupted runs**: `storyboard_run(resume_run_id=<run>)` ALONE continues after a restart / timeout — done shots reused, an in-flight backend job
   adopted; a run is continued at most once. `blocked` is not terminal: the reply names the shot job and the actions; `submission_unknown` /
   `cancel_pending` / `cancel_unconfirmed` need `job_recover` by a person (see `media-production`) before a resume is accepted.
-- Every shot is also a normal job: `jobs_list(service="shot")`, `video_review(job_id)` for a second opinion, `asset_get(asset_id)` per shot.
+- Every shot is also a normal job: `jobs_list(service="shot")`, `video_review(source=job_id)` for a second opinion, `asset_get(asset_id)` per shot.
 
 ## 4. Assemble and deliver
 `storyboard_fetch(run_id)` → final mp4 URL (presigned) + per-shot clip / last-frame URLs + `asset_id` / `asset_url` per shot + `report{duration_s,
@@ -89,7 +89,7 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 - 0.7.1 final quality: `refine="latent_upscale"` (+ `refine_width=1344, refine_height=768`) enlarges the draft's H3 latent with the 3D
   upscaler in the same job — no second sampling; `director_fetch` reports `refine_applied` (false + a warning means the node fell back
   to the draft). In fl2v plans the given frames pass through the upscaler too. Iterate prompts on drafts, add `refine` only for the
-  accepted plan. (Second-sampling modes are not offered yet.) Spoken lines never carry tags: an `@alias` inside a line someone speaks
+  accepted plan. (Second sampling is exposed as refine=upscale; check its result flag.) Spoken lines never carry tags: an `@alias` inside a line someone speaks
   becomes the plain name, while the character is still attached.
 - Measured limits (each number has a file behind it; `tools/evals/hypotheses-20260909/RESULTS.md` = R):
   · Speech: one Mandarin line of up to 26 chars fits a 5 s segment (spoken in ≤4.0 s, 2 seeds; R E1); the server refuses ~0.16 s/char + 0.5 s.

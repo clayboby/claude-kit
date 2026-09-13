@@ -3,7 +3,7 @@
 Referenced by every `SKILL.md` under `.claude/skills/*` as `../_shared/cluster-facts.md`; its sha256 is stamped in each
 skill's front matter (`shared_facts_sha256`) and checked by `media-mcp/tools/skill_check.py` — edit HERE, then run
 `media-mcp/tools/skills_build.py --write`. Timings are measurements with a date; when they drift by more than 25 %,
-update the number and the date, never the prose around it. Verified against media-mcp 0.6.0 (2026-09-06).
+update the measurement with evidence. API/preset facts verified against media-mcp 0.7.18 (2026-09-13); earlier timings below are historical samples, not latency guarantees.
 
 ## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries)
 `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `music_submit`/`music_status`/`music_fetch`,
@@ -15,7 +15,7 @@ Cloud-only, present only when the matching cloud entry is enabled (none is, 2026
 
 ## Nodes and lanes (2026-09-06)
 - **comfy2 = spark-03** (lottery node): `draft` 5 s ≈ 2 min (4 s draft 115–126 s), Krea images ≈ 30 s (models reload every job);
-  never blocked behind a 15 s render. Music models (ACE-Step, Stable Audio 3) live ONLY here — music queues behind any H3 job on it.
+  may also hold a 15 s final render. Music models (ACE-Step, Stable Audio 3) live ONLY here — music queues behind any H3 job on it.
 - **comfy = spark-04** (final node): `fast`/`daily`/`quality`; 15 s clip ≈ 36–40 min GPU hold; faster when warm (4 s draft ~80 s),
   3–4× slower after a Krea job or cache eviction. Both nodes serve `fast`/`daily`/`quality` since 2026-09-06 (comfy2 verified on a 15 s fast, 2098 s).
 - ComfyUI runs one queue serially per node: an image queued behind a running H3 job waits for the whole job (+250 s measured).
@@ -45,7 +45,7 @@ H3 clips come out quiet (≈ −34 dB measured by a reference setup); level norm
 
 ## TTS voices (`presets_list` → `tts_voices`)
 `default` (Vivian), `calm` (audiobook), `news` (Ryan), `story-female` (Serena), `story-male` (Aiden), `energetic`; cloud voices
-`cloud-cherry`, `cloud-minimax-calm` (unkeyed). One call ≤ 4000 chars; one call per scene so seams fall on scene cuts.
+`cloud-cherry`, `cloud-minimax-calm` (unkeyed). Production cap is 2000 characters per call; six local voices plus two unavailable cloud entries is not eight callable voices.
 
 ## Storyboard
 Shots 4–8 s (default 5, cap `max_shot_seconds` 6 in production), `target_seconds` ≤ 180, review gate `review_threshold` 3.5 (0 disables),
@@ -60,10 +60,10 @@ Job states: `queued_local` → `queued` → `running` → `completed` | `failed`
 `cancel_unconfirmed` need a PERSON (`job_recover`, admin) and keep their node slot meanwhile.
 
 ## Etiquette
-Record every seed (same preset + seed is deterministic). `backend_unreachable` / `queue_full`: wait and retry, never spam.
+Record every seed for comparisons; reproducibility also depends on model/workflow/runtime and is not a bitwise guarantee. `backend_unreachable` / `queue_full`: wait and retry, never spam.
 A cloud preset is money: never lottery on it unless asked; a missing key answers `backend_rejected: ... 已停用`, do not retry.
 Errors are `<code>: <detail>` with code ∈ backend_unreachable, backend_timeout, backend_rejected, backend_error, storage_error,
 invalid_preset, invalid_argument, queue_full, job_not_found, forbidden, limit_exceeded, and (0.6.0) unsupported_target,
 unsupported_references, unsupported_language, rewrite_failed, prompt_not_found, prompt_not_usable, prompt_binding_mismatch,
 idempotency_in_progress, idempotency_failed, profile_not_found.
-- Links a fetch returns (verified from the public internet 2026-09-09): `url` = presigned S3 link on `https://s3.zhenbs.com:10000`, opens ANYWHERE (phone, no login) for 24 h, supports seeking; `asset_url` = permanent `https://media-mcp.zhenbs.com:10000/assets/<id>`, needs the bearer (or the LAN default principal) — give the user `url` for "open it now", keep `asset_url` for records and for passing back to tools. Presigned URLs may be passed back as `image_url` / `first_frame` (the host is allowlisted).
+- Fetch `url` is the temporary browser link; `asset_url` is the stable authenticated record. Keep signed URLs unchanged and renew via fetch when expired. Pass `job_id` to review and `asset_id` to director references; accepted media arguments differ by tool. See `media-inputs.md` for the per-tool table. Cloud availability is on each preset/voice entry (`cloud`, `available`), not a top-level `cloud` section.

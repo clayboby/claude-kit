@@ -11,7 +11,7 @@ OS keychain (or `~/.claude/.credentials.json`) rather than in a settings file yo
 
 | | |
 |---|---|
-| Requires Claude Code | **≥ 2.1.259** (`userConfig` env injection, hyphen-preserving MCP tool names) |
+| Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks and hyphen-preserving MCP tool names; minimum supported version not established) |
 | Verified against | **Nólë v1.10.2+dgx.20260828.24** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hook is a bash script |
 | Runtime dependencies | `bash`, `curl`, `python3` (no packages) |

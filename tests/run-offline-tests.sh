@@ -46,7 +46,7 @@ echo "PostToolUse asset-notify"
 
 out="$(payload 'https://media.example.com/assets/abc123def' | notify)"
 expect_eq "accepts a same-origin /assets/<id> URL" \
-  '{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "作品已入库:https://media.example.com/assets/abc123def"}}' \
+  '{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "作品记录（需鉴权；浏览器请用 fetch 的 url）:https://media.example.com/assets/abc123def"}}' \
   "$out"
 
 # The output must be exactly one JSON document with the documented shape.
@@ -143,6 +143,9 @@ should = [
     "mcp__plugin_vagaa-media_media__image_fetch",
     "mcp__plugin_vagaa-media_media__music_fetch",
     "mcp__plugin_vagaa-media_media__storyboard_fetch",
+    "mcp__plugin_vagaa-media_media__director_fetch",
+    "mcp__plugin_vagaa-media_media__workflow_fetch",
+    "mcp__media__video_fetch",
 ]
 should_not = [
     "xmcp__plugin_vagaa-media_media__video_fetch",
@@ -152,7 +155,6 @@ should_not = [
     "mcp__plugin_vagaa-media_media__video_submit",
     "mcp__plugin_vagaa-media_media__jobs_list",
     "mcp__plugin_other_media__video_fetch",
-    "mcp__media__video_fetch",
     "Bash",
 ]
 bad = [n for n in should if not re.search(pat, n)]
@@ -160,7 +162,7 @@ bad += [n for n in should_not if re.search(pat, n)]
 print("clean" if not bad else "unexpected: " + ", ".join(bad))
 PY
 )"
-expect_eq "anchored matcher hits exactly the four fetch tools" "clean" "$matches"
+expect_eq "anchored matcher covers fetch tools on plugin and named servers" "clean" "$matches"
 
 # --------------------------------------------------------------------------
 # 3. SessionStart preflight, against the local stub only
@@ -195,6 +197,7 @@ media_pre() { # $1 stub path, $2 surface
 }
 
 expect_empty "stays silent when health and server/discover both pass" "$(media_pre ok)"
+expect_empty "omitted surface uses the manifest standard default" "$(env -u CLAUDE_PLUGIN_OPTION_SURFACE CLAUDE_PLUGIN_OPTION_MEDIA_MCP_URL="$STUB/ok/mcp" CLAUDE_PLUGIN_OPTION_MEDIA_MCP_TOKEN="$SECRET" bash "$MEDIA/scripts/preflight.sh")"
 expect_contains "reports a rejected token" "rejected the configured token" "$(media_pre 401)"
 expect_contains "reports a missing MCP endpoint" "no MCP endpoint at the configured URL" "$(media_pre 404)"
 expect_contains "reports a non-JSON-RPC answer" "not with MCP JSON-RPC" "$(media_pre garbage)"

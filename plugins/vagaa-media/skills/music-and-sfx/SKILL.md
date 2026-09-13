@@ -1,15 +1,16 @@
 ---
 name: music-and-sfx
 description: Use to generate background music or sound effects, normalize audio levels, and mix audio tracks with media; use media-production for spoken narration and translation.
-verified_against: media-mcp 0.7.16 (2026-09-10)
+verified_against: media-mcp 0.7.18 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 8b503dfe5804cabe16db6718200c111583e9d4f62f0cde22ca6941a5fb676dc3
+shared_facts_sha256: c4c365c20ef4c0e3dde5f6f161d18e5154dd943fbb50b3d4ece2e49b269d8684
 ---
 
 # Music and sound effects (ACE-Step + Stable Audio 3 on comfy2)
 
 Facts (limits, node, timings): `../_shared/cluster-facts.md`. Spoken narration (`tts`) and translation belong to `media-production`;
 assembling a whole film (per-shot clips, seams) belongs to `storyboard-longform`.
+Publisher skills and their API differences: `../_shared/provenance.md`; read the ACE-Step guidance when changing the music workflow.
 
 ## 1. BGM
 `music_submit(prompt=<style / instrument / mood tags>, preset="bgm-draft", seconds=30, seed=<fixed>, bpm=<int>, key="A minor")` → poll
@@ -23,11 +24,11 @@ key). A multi-seed lottery is normal for SFX. Loops: ask for "seamless loop" and
 
 ## 3. Levels and mixing — what exists today
 - H3 clips carry their own generated audio and come out quiet (≈ −34 dB in a reference measurement). Loudness normalisation, mixing a BGM under a
-  clip and burning subtitles are **not exposed as tools in 0.6.0** (a `compose` / loudnorm chain is a 0.6.1 candidate). Hand the clip and the music
+  clip and burning subtitles are **not exposed as MCP tools** in the verified deployment. Hand the clip and the music
   asset URLs to the user's editor with the target level; do not claim a mix was made.
 - When a mix must happen on the cluster anyway, `workflow_submit` with an operator-provided ffmpeg / ComfyUI audio graph is the only route; say so.
 
 ## 4. Queueing reality
 Music models live only on `comfy2` (spark-03), so a music job queues behind any H3 draft or final running there: submit BGM / SFX first or accept the
-wait; `music_status` shows `queue_position`. Record seeds — same preset + seed is deterministic. Cloud music preset `fun-music` is unkeyed (money, no
+wait; `music_status` shows `queue_position`. Record seeds, preset and runtime for comparisons; do not promise bitwise reproducibility. Cloud music preset `fun-music` is unkeyed (money, no
 lottery, not retried on `backend_rejected`).

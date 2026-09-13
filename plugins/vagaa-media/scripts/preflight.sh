@@ -16,7 +16,7 @@ set -euo pipefail
 TIMEOUT_S=3
 LABEL="media gateway"
 URL="${CLAUDE_PLUGIN_OPTION_MEDIA_MCP_URL:-}"
-SURFACE="${CLAUDE_PLUGIN_OPTION_SURFACE:-compact}"
+SURFACE="${CLAUDE_PLUGIN_OPTION_SURFACE:-standard}"
 
 say() { printf '[vagaa-media] %s\n' "$1"; }
 
