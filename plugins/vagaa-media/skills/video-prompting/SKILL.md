@@ -1,9 +1,9 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.7.21 (2026-09-13)
+verified_against: media-mcp 0.7.22 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c820f0c9
+shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 ---
 
 Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
@@ -21,6 +21,7 @@ setting, light and colour; a cut is "the camera cuts to ..." inside the same par
 overall_soundscape: <1-4 sentences of diegetic sound, or N/A>
 non_diegetic_music: <1-3 sentences: instruments, tempo, dynamics; or N/A>
 ```
+- Preserve the brief's audio requirements: a closed list of allowed sounds excludes added room tone or ambience. No dialogue, no music and complete silence are different requests; do not impose silence on a brief that asks for sound. Use `N/A` for a silent soundscape or absent non-diegetic music as appropriate; source music heard within the scene belongs in the integrated description.
 - **Spoken words** go inside the dialogue tag with a language label; who speaks and how stays outside it:
   `(S1) The vendor says warmly: <d>[Chinese] 来,刚烤好的,趁热吃</d>`, `(S2) She whispers: <d>[English] Don't look back.</d>`.
   Copy the line character for character (same punctuation, same spaces, no translation). Stable ids `S1`, `S2`, … for speakers only.
@@ -59,7 +60,7 @@ prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset":
 | wrong language spoken | wrong `[Language]` tag or a translated line | tag = the line's language, copy the line verbatim |
 | character drifts (clothes, age) | vague subject line | one explicit subject sentence: age, build, clothing, colour |
 | action not performed | two actions in one clause | one beat per sentence, in playback order |
-| flat sound | soundscape repeats the dialogue or names music | ambience only in `overall_soundscape`, music only in `non_diegetic_music` |
+| sound does not match the brief | soundscape repeats dialogue or adds unrequested layers | requested diegetic sounds in `overall_soundscape`; requested background score in `non_diegetic_music`; keep source music inside the scene description |
 
 ## 4. A/B two prompts honestly
 Same preset, same `seconds`, same `seed`, submitted back to back so both land on the same node when possible (check `backend` in each job); review both

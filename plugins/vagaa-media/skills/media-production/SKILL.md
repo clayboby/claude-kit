@@ -1,9 +1,9 @@
 ---
 name: media-production
 description: Use to search or review media assets, create standalone images or video clips, or generate speech and translations through media-mcp; coordinate the draft, review, and final workflow and load specialist skills when needed.
-verified_against: media-mcp 0.7.21 (2026-09-13)
+verified_against: media-mcp 0.7.22 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c820f0c9
+shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 ---
 
 # Media production on the cluster (core loop)
@@ -22,7 +22,7 @@ Use the exact qualified tool names and input schemas exposed in this session; ne
   `prompt_rewrite`) — enough to re-submit the same seed on a final preset without guessing. `presign=true` adds a 24 h URL.
 - `asset_tag(asset_id, add=["hero","ep1"], starred=true, collection="game-art")` marks keepers; untagged drafts expire after 7 days.
 - `asset_feedback_get(asset_id)` (needs `jobs.read`) returns HUMAN ratings entered in the console; `assets_search(rating="bad")` lists rated failures, `rating="none"` unrated work. Empty ratings mean no human feedback, not poor quality. Machine review uses separate scores.
-- A good hit ends the task: do not regenerate what the library already holds unless the user asks for a new take.
+- Reuse a matching asset when it satisfies the current request. Scores and metadata identify candidates; claim a hard constraint is met only after inspecting the original media against that same requirement. State any unverified action, sound or visual constraint instead of treating a historical score as delivery approval.
 
 ## 2. The loop: draft → review → final
 1. **Draft cheaply.** `video_submit(prompt, preset="draft", seconds=5, seed=<fixed>)` or a lottery `seeds=[11, 12, 13, 14]` (≤ 8, one job per
@@ -38,7 +38,7 @@ Use the exact qualified tool names and input schemas exposed in this session; ne
    a `prompt_id` written for `draft` is accepted unchanged on `fast`/`daily`/`quality` (same 5 s); anything else is refused, never re-rewritten.
    Fix missing actions, wrong references or style drift before final rendering; a larger preset is not a repair operation. Recheck the final itself.
 4. **Deliver.** `video_fetch(job_id)` → `url` (temporary browser link), `asset_id`, authenticated stable `asset_url`. Give the user `url` unchanged; keep `asset_id`/`job_id` for reuse. Save an approved deliverable with `asset_tag(asset_id, starred=true)` or a collection; an unstarred draft may expire after 7 days. Media input and link contracts: `../_shared/media-inputs.md`.
-Images: `image_submit(prompt, preset="krea-default", seed, width, height)`; `krea-169` for a 16:9 first frame; poll `image_status(job_id)`, then `image_fetch(job_id)`.
+Images: `image_submit(prompt, preset="krea-default", seed, width, height)`; `krea-169` defaults to 1344×768 (7:4). For exact 16:9, explicitly pass `width=1024, height=576` and check the output dimensions; poll `image_status(job_id)`, then `image_fetch(job_id)`.
 Raw ComfyUI graphs: `workflow_submit(graph_json, overrides)` → `workflow_status` / `workflow_fetch` — ask the operator for a template first.
 
 ## 3. Speech and translation (synchronous, this skill's job)

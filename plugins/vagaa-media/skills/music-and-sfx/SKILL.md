@@ -1,9 +1,9 @@
 ---
 name: music-and-sfx
 description: Use to generate background music or sound effects, plan sound and music separately, and identify the current limits of audio mixing and level control; use media-production for spoken narration and translation.
-verified_against: media-mcp 0.7.21 (2026-09-13)
+verified_against: media-mcp 0.7.22 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c820f0c9
+shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 ---
 
 # Music and sound effects (ACE-Step + Stable Audio 3 on comfy2)
@@ -11,6 +11,7 @@ shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c82
 Facts (limits, node, timings): `../_shared/cluster-facts.md`. Spoken narration (`tts`) and translation belong to `media-production`;
 assembling a whole film (per-shot clips, seams) belongs to `storyboard-longform`.
 Publisher skills and their API differences: `../_shared/provenance.md`; read the ACE-Step guidance when changing the music workflow.
+Use the current brief's sound requirements: a closed list of permitted sounds excludes added ambience or room tone. No dialogue, no music and complete silence are different constraints; do not add a score or impose silence by default. Verify requested audio in the original media, not from an image-based review score.
 
 ## 1. BGM
 `music_submit(prompt=<style / instrument / mood tags>, preset="bgm-draft", seconds=30, seed=<fixed>, bpm=<int>, key="A minor")` → poll
@@ -20,7 +21,7 @@ by ear / rubric, then re-submit the **same prompt + seed + bpm + key** on `prese
 
 ## 2. SFX
 `music_submit(prompt=<describe the sound, not music>, preset="sfx", seconds=4, seed=<fixed>)` → FLAC (Stable Audio 3 small-sfx; no lyrics / bpm /
-key). Two to eight seconds is a typical short cue, not the accepted duration limit: current SFX accepts 1–60 seconds; verify the live schema/preset before choosing the required length. A multi-seed lottery is normal for SFX. Loops: ask for "seamless loop" and cross-fade in the editor; sample-exact loops are not guaranteed.
+key). Current SFX accepts 1–60 seconds; verify the live schema/preset before choosing the required length. Two to eight seconds is only a typical short cue. A multi-seed lottery is normal for SFX. Loops: ask for "seamless loop" and cross-fade in the editor; sample-exact loops are not guaranteed.
 
 ## 3. Levels and mixing — what exists today
 - H3 clips carry their own generated audio and come out quiet (≈ −34 dB in a reference measurement). Loudness normalisation, mixing a BGM under a

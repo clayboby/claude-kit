@@ -3,7 +3,7 @@
 Referenced by every `SKILL.md` under `.claude/skills/*` as `../_shared/cluster-facts.md`; its sha256 is stamped in each
 skill's front matter (`shared_facts_sha256`) and checked by `media-mcp/tools/skill_check.py` — edit HERE, then run
 `media-mcp/tools/skills_build.py --write`. Timings are measurements with a date; when they drift by more than 25 %,
-update the measurement with evidence. API/preset contracts aligned with media-mcp 0.7.21 (2026-09-13); deployment verification is recorded in the release ledger. Earlier timings below are historical samples, not latency guarantees.
+update the measurement with evidence. API/preset contracts aligned with media-mcp 0.7.22 (2026-09-13); deployment verification is recorded in the release ledger. Earlier timings below are historical samples, not latency guarantees.
 
 ## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries)
 `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `music_submit`/`music_status`/`music_fetch`,
@@ -23,7 +23,8 @@ Cloud-only, present only when the matching cloud entry is enabled (none is, 2026
   reverse prompts all use it. `presets_list.models` is the live list.
 - TTS: Qwen3-TTS-12Hz-1.7B on spark-04 `tts-lane` (≈0.75× real time per sentence, batch-decoded); translation: Hy-MT2 on spark-04.
 
-## Video presets (H3 on the ComfyUI lane, 24 fps, `seconds` 4–15, frames snap to 17n+5: 4 s → 107, 5 s → 124, 15 s → 362)
+## Video presets (H3 on the ComfyUI lane, 24 fps)
+`video_submit` accepts integer `seconds` from 1 through `presets_list.defaults.max_seconds` (15 in production, 2026-09-13); token limits may be stricter. The [official H3 output range](https://github.com/MiniMax-AI/MiniMax-H3#readme), 4–15 s, is model guidance, not the gateway's minimum accepted duration. Frames snap to 17n+5: 4 s → 107, 5 s → 124, 15 s → 362; inspect the returned duration.
 | preset | size / steps | ≈ time | use |
 |---|---|---|---|
 | `draft` | 832×480, Turbo 8 | 5 s ≈ 2 min (comfy2) | iterate; the only preset `prompt_rewrite` covers (T2V, 5 s, zh/en dialogue) |
@@ -36,12 +37,12 @@ The five local video presets (`draft`, `preset="director_t2v"`, `fast`, `daily`,
 `video_submit` lottery: `seeds=[...]` (≤ 8) or `n=k` → one job per seed; reply `{batch, job_ids, jobs, nodes}`. `storyboard_run` and `director_run` take one `seed`, not `seeds` or `n`.
 
 ## Image presets (Krea 2 via ComfyUI)
-`krea-default` 1024×1024, 8 steps, CFG 1, ≈15 s warm; `krea-169` 1344×768 for a 16:9 first frame (`nodes: [comfy2, comfy]`).
+`krea-default` 1024×1024, 8 steps, CFG 1, ≈15 s warm; `krea-169` defaults to 1344×768, exactly 7:4 (`nodes: [comfy2, comfy]`), not exact 16:9 despite its name. For an exact 16:9 image, pass `image_submit(prompt, preset="krea-169", width=1024, height=576, seed=...)`; two production images on 2026-09-13 had those actual dimensions. Check output dimensions separately from visual quality; a preset label or prompt saying "16:9" does not establish the ratio.
 Cloud image presets (unkeyed): `qwen-image-pro`, `seedream-pro`, `flux2-pro`. Raw graphs: `workflow_submit` (ask for a template first).
 
 ## Music / SFX presets (comfy2 only)
 `bgm-draft` (ACE-Step 1.5 turbo, 30 s, MP3, lottery here), `bgm-final` (60–300 s FLAC, same prompt+seed+bpm+key, never lottery),
-`sfx` (Stable Audio 3 small-sfx, 2–8 s FLAC, no lyrics/bpm/key). Limits: bgm 1–600 s, sfx 1–60 s. Cloud: `fun-music` (unkeyed).
+`sfx` (Stable Audio 3 small-sfx, accepts 1–60 s FLAC; 2–8 s is a typical short cue, no lyrics/bpm/key). BGM accepts 1–600 s. Check the live preset and schema for the requested length. Cloud: `fun-music` (unkeyed).
 H3 clips come out quiet (≈ −34 dB measured by a reference setup); level normalisation is not exposed as a tool yet.
 
 ## TTS voices (`presets_list` → `tts_voices`)
@@ -58,6 +59,7 @@ continuity `fl2v` (default) | `guide` (experimental) | `cut`; ≈ 5 min per 5 s 
 ## Asset library and job states
 Every completed job is copied to MinIO and indexed (prompt, seed, preset, node, review score, tags). Stable URL
 `https://media-mcp.zhenbs.com:10000/assets/<asset_id>`; presigned links last 24 h. Drafts expire after 7 days unless starred / in a collection.
+Historical scores, tags and accepted runs identify candidates, not proof that a new brief's hard constraints are met. Claim a constraint is demonstrated only when the cited original media is inspectable and has been checked against that same requirement; record what remains unverified. Sampled frames cannot certify complete action timing or audio. Choose sound from the current brief: a closed list of allowed sounds excludes added room tone, while no dialogue, no music and complete silence are different requests.
 Job states: `queued_local` → `queued` → `running` → `completed` | `failed` | `lost`; `submission_unknown`, `cancel_pending`,
 `cancel_unconfirmed` need a PERSON (`job_recover`, admin) and keep their node slot meanwhile.
 

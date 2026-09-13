@@ -1,9 +1,9 @@
 ---
 name: image-edit-and-reference
 description: Use to plan image changes, animate images, preserve character references, and select supported reference or video-to-video routes; check the current capability table before promising edits, motion transfer or subject replacement.
-verified_against: media-mcp 0.7.21 (2026-09-13)
+verified_against: media-mcp 0.7.22 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c820f0c9
+shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 ---
 
 # Images, references and identity — current gateway contracts
@@ -15,11 +15,13 @@ Read this section first: it is the honest capability table. Facts (presets, node
 | describe an existing image to re-create or vary it | yes | `reverse_prompt(source, style="sd")` → `image_submit`; `style="h3"` → `video_submit`; `style="plain"` → prose |
 | a new image in a chosen composition / size | yes | `image_submit(prompt, preset="krea-default"|"krea-169", seed, width, height)` → `image_review` |
 | animate an existing image (image-to-video) | yes, director | `director_run(segments=[{mode:"fl2v", first_frame:<image asset/job/allowlisted URL>, prompt:..., seconds:...}], seed=...)`. Current local `video_submit` T2V presets cannot use an image. `prompt_rewrite` does not cover i2v |
-| keep a character stable across shots of one film | yes (planner) | `storyboard-longform`: the same `characters` sheet in every shot |
+| keep a character stable across shots of one film | planning support; verify outputs | `storyboard-longform`: the same `characters` sheet in every shot guides identity but does not certify it |
 | instruction-based image editing / multi-reference image composition | **no dedicated tool** | `workflow_submit` can run an existing verified graph; model weights alone do not provide an image-edit API. No release date is promised |
 | reference-driven video (character / voice references) | yes, director | `director_run` segment `ref_images` / `ref_audios` or its character table; see `storyboard-longform`. This does not extend `prompt_rewrite` to reference modes |
 | video-to-video using an existing clip | yes, director | A single `director_run` v2v segment with `source_video`; this is not a dedicated motion-transfer / subject-swap API |
 | upload a local user file | **no dedicated tool** | A gateway asset or allowlisted URL is required. Report this input gap; do not claim a filesystem path or data URI was accepted |
+
+`krea-169` defaults to 1344×768 (7:4), not exact 16:9. For an exact 16:9 image, explicitly pass `width=1024, height=576` to `image_submit` and verify the original file's dimensions; wording the ratio in a prompt is not a size control.
 
 When a row says "no dedicated tool": tell the user plainly, offer the nearest available route (often `reverse_prompt` + a new generation, or a hand-built
 ComfyUI graph via `workflow_submit` with the operator's template), and record the gap; never fake the result with a different tool.

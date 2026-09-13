@@ -1,21 +1,21 @@
 ---
 name: storyboard-longform
 description: Use to turn briefs, scripts, or prose into multi-shot videos, manage characters and transitions across shots, resume interrupted storyboard runs, and assemble the resulting sequence.
-verified_against: media-mcp 0.7.21 (2026-09-13)
+verified_against: media-mcp 0.7.22 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c820f0c9
+shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 ---
 Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
-Anything longer than one 15 s clip goes through the storyboard tools (plan → run → status → fetch), not through hand-chained `video_submit`.
+For a film beyond `presets_list.defaults.max_seconds` (currently 15 s), choose the storyboard pipeline or Director segments below; do not hand-chain `video_submit`.
 Facts (shot limits, timings, review gate, continuity modes): `../_shared/cluster-facts.md`. Single-clip prompt wording: `video-prompting`.
 Reference images / identity across shots is split: cross-shot continuity is this skill; reference-driven generation is `image-edit-and-reference`.
 
 ## 0. Brief before shots (the producer's part; the 2026-09-09 trial film passed every technical review and was judged wrong on
 emotion, tone, scene and plot because it had none — `tools/evals/plugin-trial-20260909/`)
 Five lines at the top of the plan notes, judged before any technique: 1) one sentence of what happens; 2) genre and tone (what the
-cold or the light means); 3) what the viewer feels at start / middle / end; 4) references (a film scene or an accepted run's asset id);
+cold or the light means); 3) what the viewer feels at start / middle / end; 4) references (a film scene or asset id; note which same-brief constraints its original media actually demonstrates);
 5) don'ts (smiles, bright streets, storybook look, music, happy ending…). Each shot then names its emotion and the character's physical
 state before its action. Templates: LOOK Studios and WKKF briefs, cited in `reference/research/20260909-human-vs-ai-h3-prompts.md` §5.
 
@@ -24,11 +24,11 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
 - Feed a **novel chapter** as-is (up to ~60k chars; split longer chapters by scene), a **shot script** as free text (one paragraph per shot) or
   as a ready JSON storyboard (`{"shots":[{"seconds","prompt","camera","characters","dialogue","transition"}], "characters":{...}}` — JSON skips the LLM),
   or a **one-line brief** with `target_seconds`.
-- Pass `characters={name: {"appearance": ...}}` when the cast is known: the planner repeats the sheet in every shot, which is what keeps faces and
-  clothes stable across shots. Give every recurring character the same name in every shot.
+- Pass `characters={name: {"appearance": ...}}` when the cast is known: the planner repeats the sheet in every shot to guide faces and
+  clothes; inspect the rendered shots to verify identity. Give every recurring character the same name in every shot.
 - Read `plan.shots[*]` and `shot_prompts` (the exact H3 prompts the runner will send; they carry the planner's own `Style:` / `Location:` prefixes —
   0.6.0 does not route storyboard prompts through `prompt_rewrite`). Fix wrong beats, split shots whose dialogue does not fit (~3 words/s, 1 s
-  silence at both ends), set `transition: "continue"` only when the next shot really continues in the same place; then
+  speech-free margin at both ends), set `transition: "continue"` only when the next shot really continues in the same place; then
   `storyboard_plan_update(plan_id, plan)`. `warnings` lists what the validator changed. `storyboard_plan_get(plan_id)` re-reads a stored plan.
 
 ## 2. Run
@@ -37,7 +37,7 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
   every 60–120 s: `stage` names the shot being rendered, `progress.eta_s` extrapolates from finished shots.
 - `continuity`: `fl2v` (default) hands the previous last frame to the next shot; `cut` for montage / multi-location pieces (no seams to protect);
   `guide` (experimental) anchors the last 22 frames + audio and falls back to `fl2v` if ComfyUI rejects it. `review_threshold=0` disables the gate.
-- `quality` is for the final render of an approved plan whose `fast` run scored well; it sharpens, it does not fix planning.
+- `quality` is for a final render after the plan and its `fast` output meet the current brief's hard constraints; a historical score alone is not approval. Recheck the final itself; a larger preset does not fix planning.
 
 ## 3. Read the score table, then resume or redo
 - Each shot in `storyboard_status` / `storyboard_fetch` has `review_overall` (Qwen vision 1–5), `attempts`, `seam_ssim` / `seam_ok`, `drop_frames`,
@@ -72,7 +72,7 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 - fl2v uses `first_frame`/`last_frame`; r2v uses `ref_images` (≤9)/`ref_audios` (≤3); v2v uses `source_video`. Unknown fields and incompatible reference fields are rejected. `ref_videos` is not supported; never silently replace it with a v2v source.
 - Seconds snap UP to H3's 17k+5 frame grid (5 s → 124 frames, 4 s → 107); 0.2–15 s per segment. Keep a plan ≤ 24 segments.
 - v2v takes its length from the source (ffprobe), not from `seconds`; sources over 362 frames (~15 s) are rejected: trim first.
-- Draft = 832×480 (default). Final = width 1344, height 768 — same call, ~4× the time. Never iterate prompts on a final.
+- Draft = 832×480 (default). Final = width 1344, height 768 (7:4, not exact 16:9) — same call, ~4× the time. Never iterate prompts on a final.
 - fl2v with only a first frame tends to stay still: give it an end frame or write the movement beat by beat.
 - r2v references live on the segment (the node ignores plan-level references): always attach `ref_images`/`ref_audios` to the segment that uses them and cite `<Picture N>` / `<Audio N>` in that prompt.
 - `video_submit(prompt, preset="director_t2v")` runs the same director graph for ONE text segment — a quick single clip on the
@@ -102,5 +102,5 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   then the required sound and dialogue. Choose music, silence and shot direction from the current brief; a previous promo's preference is not universal.
   No dialogue, no music and silence are different constraints. Preserve deliberate hand/object and framing requirements; avoid conflicting instructions.
   The server adds the closed-lips sentence for narration. Review actual action and audio separately from sampled-image scores.
-- Plan → director in one call: `storyboard_direct(plan_id, seed=…, refine=…)` compiles a stored `storyboard_plan` (characters with `ref_image_url` = an asset id `as-…` from image_fetch / assets_search (a job id or allowlisted URL also works; presigned `url`s expire, `asset_url` is refused) → `<Picture N>` identity lock, dialogue → `<d>` lines, `transition: continue` → joined motion/audio) into ONE director job; poll `director_status`, fetch `director_fetch`; the film is judged whole afterwards: `storyboard_direct(review="gate")` then `director_accept(run_id)` measures every segment boundary (fail = a jump > 3× the median frame difference, E10 `tools/evals/hypotheses-20260909/RESULTS.md`) and hands back `retry.seed`; resubmit with it — seams are a draw, not a setting; no per-shot retry (ruling: reference/research/20260909-director-n4n5-design-gpt6.md). When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
+- Plan → director in one call: `storyboard_direct(plan_id, seed=…, refine=…)` compiles a stored `storyboard_plan` (characters with `ref_image_url` = an asset id `as-…` from image_fetch / assets_search (a job id or allowlisted URL also works; presigned `url`s expire, `asset_url` is refused) → `<Picture N>` reference binding (verify rendered identity), dialogue → `<d>` lines, `transition: continue` → joined motion/audio) into ONE director job; poll `director_status`, fetch `director_fetch`; the film is judged whole afterwards: `storyboard_direct(review="gate")` then `director_accept(run_id)` measures every segment boundary (fail = a jump > 3× the median frame difference, E10 `tools/evals/hypotheses-20260909/RESULTS.md`) and hands back `retry.seed`; resubmit with it — seams are a draw, not a setting; no per-shot retry (ruling: reference/research/20260909-director-n4n5-design-gpt6.md). When to use `storyboard_*` instead: you want the planner LLM to write the shot list from prose, the per-shot review gate, or resume-by-shot. When you already have the shots, `director_run` is one call and joins are cleaner.
 - Packs: `director_pack_export(run_id)` → the node's own zip for the ComfyUI UI (导入导演包; runs before 0.7.7 cannot); `director_pack_import(pack_url|pack_asset)` → `pack_id` + what it would render; `director_pack_run(pack_id, seed=…, refine=…)` renders it as recorded.
