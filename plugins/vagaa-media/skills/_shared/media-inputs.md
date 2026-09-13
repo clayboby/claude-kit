@@ -1,11 +1,11 @@
 # Media inputs and delivery links
 
-Contracts checked for media-mcp 0.7.20 on 2026-09-13. Read this reference when reusing an asset or delivering a browser link; the live tool schema remains authoritative.
+Contracts aligned with media-mcp 0.7.21 on 2026-09-13; deployment verification is recorded in the release ledger. Read this reference when reusing an asset or delivering a browser link; the live tool schema remains authoritative.
 
 | Tool / purpose | Argument and supported value |
 |---|---|
 | `image_review`, `video_review`, `reverse_prompt` | `source`: a completed `job_id` or an allowlisted HTTP(S) URL; not `job_id=` as a parameter, not a bare `asset_id`, not the authenticated stable asset URL |
-| `video_submit` image-to-video | `image_url`: an allowlisted HTTP(S) URL. It has no `first_frame` alias. Use the returned presigned URL without changing its encoding |
+| `video_submit` optional image input | Only a preset that actually supports `image_url` may use an allowlisted URL; Comfy presets expose `presets_list.video[preset].image_url_supported`. Current local `draft`, `preset="director_t2v"`, `fast`, `daily`, `quality` are T2V and reject it. No `first_frame` alias. Use Director fl2v for local image-to-video |
 | `director_run` | Segment `first_frame`, `last_frame`, `ref_images`, `ref_audios`, `source_video`: appropriate-kind asset IDs, completed job IDs or allowlisted URLs |
 | Director mode compatibility | First/last frames require fl2v; reference images/audio require r2v; source video requires v2v. `ref_videos` is unsupported and is rejected. Unknown fields are rejected before media I/O |
 | `storyboard_plan_update` → `storyboard_direct` | Store a character image reference in `ref_image_url`; asset IDs are supported and avoid URL expiry. Voice references belong to `director_run`'s character/segment inputs; do not invent `ref_audio_url` on a storyboard character |

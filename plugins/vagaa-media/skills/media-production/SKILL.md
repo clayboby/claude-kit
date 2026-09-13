@@ -1,9 +1,9 @@
 ---
 name: media-production
 description: Use to search or review media assets, create standalone images or video clips, or generate speech and translations through media-mcp; coordinate the draft, review, and final workflow and load specialist skills when needed.
-verified_against: media-mcp 0.7.20 (2026-09-13)
+verified_against: media-mcp 0.7.21 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 0a403c42e84651f84eed8528b2248d8698a3d0fb6f22c35f505689b531ce12f5
+shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c820f0c9
 ---
 
 # Media production on the cluster (core loop)

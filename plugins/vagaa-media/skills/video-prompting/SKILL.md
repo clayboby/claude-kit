@@ -1,9 +1,9 @@
 ---
 name: video-prompting
 description: Use to write, rewrite, diagnose, or A/B-test video prompts for a selected preset, including spoken dialogue, visible text, and reference-aware descriptions; use storyboard-longform for shot planning and continuity.
-verified_against: media-mcp 0.7.20 (2026-09-13)
+verified_against: media-mcp 0.7.21 (2026-09-13)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 0a403c42e84651f84eed8528b2248d8698a3d0fb6f22c35f505689b531ce12f5
+shared_facts_sha256: ab2c5b611ed611087a6ee46401c5d3f185d7e49c0ad7f531afd25cb2c820f0c9
 ---
 
 Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
@@ -48,6 +48,7 @@ prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset":
   `prompt_id`; `on_failure="raw"` returns your own words as `status: fallback_raw` instead.
 - Reply fields worth reading: `prompt`, `prompt_id`, `profile{id,version,sha256}`, `validation.errors/warnings`, `attempts`, `usage`, `timings`.
   `prompt_get(prompt_id)` returns the same plus the execution snapshot (messages, model revision, sampling) and the jobs that used it.
+- A hand-written prompt submitted with `rewrite="off"` creates no rewrite artifact. Preserve that prompt and the original brief with the job; do not invent a `prompt_id` or schedule `prompt_get`/profile validation for that path.
 - Hand over `prompt_id` to `video_submit(prompt_id=..., preset="draft", seed=...)`; it is bound to `draft` (reusable unchanged on `fast`/`daily`/
   `quality`, same 5 s) and is never rewritten again. `presets_list` → `prompt_rewrite.supported` is the live coverage table.
 
