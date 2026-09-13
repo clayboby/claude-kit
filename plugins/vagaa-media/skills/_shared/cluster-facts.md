@@ -3,7 +3,7 @@
 Referenced by every `SKILL.md` under `.claude/skills/*` as `../_shared/cluster-facts.md`; its sha256 is stamped in each
 skill's front matter (`shared_facts_sha256`) and checked by `media-mcp/tools/skill_check.py` — edit HERE, then run
 `media-mcp/tools/skills_build.py --write`. Timings are measurements with a date; when they drift by more than 25 %,
-update the measurement with evidence. API/preset facts verified against media-mcp 0.7.18 (2026-09-13); earlier timings below are historical samples, not latency guarantees.
+update the measurement with evidence. API/preset facts verified against media-mcp 0.7.19 (2026-09-13); earlier timings below are historical samples, not latency guarantees.
 
 ## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries)
 `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `music_submit`/`music_status`/`music_fetch`,

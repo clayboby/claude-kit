@@ -13,10 +13,10 @@ include facts from their verified deployment; the token is `sensitive`, so Claud
 | | |
 |---|---|
 | Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks, skill loading and production MCP calls with hyphen-preserving tool names; minimum supported version not established) |
-| Verified against | **media-mcp 0.7.18** |
+| Verified against | **media-mcp 0.7.19** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3` (no packages) |
-| Tool surface | media-mcp 0.7.18 serves the **standard** surface only (`/mcp`, 40 tools). `/mcp-compact` is not deployed; use `surface=standard` |
+| Tool surface | media-mcp 0.7.19 serves the **standard** surface only (`/mcp`, 40 tools). `/mcp-compact` is not deployed; use `surface=standard` |
 
 ## What you get
 
