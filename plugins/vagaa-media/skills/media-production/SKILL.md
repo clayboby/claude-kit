@@ -12,7 +12,7 @@ when_to_use: 用户一提到出图、出片、配音、翻译、找作品、审�
 3. **Long jobs are tickets, not loops.** fast/quality clips, 15 s renders and storyboard/director runs take 5–40 min. Wait with `job_wait(job_id)` / `storyboard_wait(run_id)` (server-side long-poll, ≤55 s per call, returns early on change; reply carries `eta_s`, `done`, `next`) — never `sleep`. At most 3 waits per turn; then END the turn with the job_id / run_id, `eta_s`, and "说一声我再查". NEVER say you are monitoring, polling or watching in the background: you are not; only a person's next message resumes you.
 4. **Exact tool names.** Media tools are `mcp__plugin_vagaa-media_media__<tool>` (e.g. `…media__presets_list`, `…media__video_status`); never shorten or hyphenate the prefix.
 5. **Results carry the ticket.** Every reply that produced media ends with: asset page URL, job_id, preset + seed, and what to say to iterate.
-6. **Read the brief forms first.** `presets_list()` is a one-screen summary (use `brief=false` only when a parameter is missing); `assets_search` rows are brief (`full=true` or `asset_get` for everything). `video_review` frames: 8 is enough for a draft; 16 costs ~4 GiB on the language node.
+6. **Read the brief forms first.** call `presets_list(brief=true)` first (one screen, ~3K chars); plain `presets_list()` is the 26K-char full contract, only for a missing parameter; `assets_search` rows are brief (`full=true` or `asset_get` for everything). `video_review` frames: 8 is enough for a draft; 16 costs ~4 GiB on the language node.
 
 
 # Media production on the cluster (core loop)
