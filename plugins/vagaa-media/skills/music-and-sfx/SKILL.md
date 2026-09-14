@@ -1,7 +1,7 @@
 ---
 name: music-and-sfx
 description: Load for background music, BGM, soundtrack, jingle, beat/rhythm track, sound effects or ambience for a video. 中文触发：配乐、背景音乐、BGM、音效、环境音、卡点音乐、来段音乐、vlog 开头那种。Plans music and SFX separately (music_submit presets bgm-draft/bgm-final/sfx), explains mixing limits. NOT for narration or spoken lines — that is tts in media-production.
-verified_against: media-mcp 0.7.36 (2026-09-15)
+verified_against: media-mcp 0.7.37 (2026-09-15)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 when_to_use: 用户要音乐、音效、氛围声时加载；要人声旁白/台词时不加载本 skill。
@@ -33,4 +33,4 @@ key). Current SFX accepts 1–60 seconds; verify the live schema/preset before c
 ## 4. Queueing reality
 Music models live only on `comfy2` (spark-03), so a music job queues behind any H3 draft or final running there: submit BGM / SFX first or accept the
 wait; `music_status` shows `queue_position`. Record seeds, preset and runtime for comparisons; do not promise bitwise reproducibility. Cloud music preset `fun-music` is unkeyed (money, no
-lottery, not retried on `backend_rejected`).\n\n## Beat-synced cuts (0.7.32)\n`beat_grid(audio=<music asset id / job id / URL>, bpm_hint?, fps=24, beats_per_shot=[1,2,4,8])` returns bpm, beat times, downbeats, `cut_frames` and a shot-length table with the nearest H3 17n+5 frame count and its error. Plan 2–5 s shots that END on beats (official MV skill: cut on snare / drop / phrase, hard cuts only), render each at `h3_frames`, then trim to `cut_frames` in post. Music first, video second.\n\n`beat_cut(clips=[...], audio, beats_per_shot=[4])` then assembles the clips on those beats (hard cuts, music from t=0) into one workflow job + asset and reports each cut's error; render clips a little longer than their beats.\n
+lottery, not retried on `backend_rejected`).\n\n## Beat-synced cuts (0.7.32)\n`beat_grid(audio=<music asset id / job id / URL>, bpm_hint?, fps=24, beats_per_shot=[1,2,4,8])` returns bpm, beat times, downbeats, `cut_frames` and a shot-length table with the nearest H3 17n+5 frame count and its error. Plan 2–5 s shots that END on beats (official MV skill: cut on snare / drop / phrase, hard cuts only), render each at `h3_frames`, then trim to `cut_frames` in post. Music first, video second.\n\n`beat_cut(clips=[...], audio, beats_per_shot=[4], plan_only=true)` first returns the shot plan and `seconds` vs `music_seconds` without rendering — tune `beats_per_shot` / clip count / `max_seconds` there (the cut can never be longer than the music); then call it ONCE with `plan_only=false`: it assembles the clips on those beats (hard cuts, music from t=0) into one workflow job + asset and reports each cut's error. Do not re-render the same request to "check" it: an identical call within an hour returns the film already made. Render clips a little longer than their beats.\n
