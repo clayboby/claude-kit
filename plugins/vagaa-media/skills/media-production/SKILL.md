@@ -1,10 +1,19 @@
 ---
 name: media-production
-description: Use to search or review media assets, create standalone images or video clips, or generate speech and translations through media-mcp; coordinate the draft, review, and final workflow and load specialist skills when needed.
-verified_against: media-mcp 0.7.22 (2026-09-13)
+description: MUST load FIRST for any request to make, find, review or deliver media through the media gateway: images, video clips, speech/narration, translation, finding earlier work, reviewing a clip, draft→final. 中文触发：帮我做个视频、画张图、整张图、念出来、配音、翻译、找之前做的、审一下、哪里不行、出正式版、再来一张、换个风格、用 sora/可灵/runway 生成。Covers image_submit, video_submit (draft → video_review → same-seed final), tts, translate, assets_search, video_review, job polling and delivery, and the behaviour rules for unsupported models, vague briefs and long jobs.
+verified_against: media-mcp 0.7.27 (2026-09-14)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
+when_to_use: 用户一提到出图、出片、配音、翻译、找作品、审片，先加载本 skill 再调任何 media 工具；用户点名不存在的模型（sora、runway、可灵、veo）时也先加载。
 ---
+## 0. Behaviour rules (2026-09-14, from the pty trial)
+1. **Unsupported capability first.** If the user names a model or feature this gateway does not have (sora, runway, kling, veo, seedance, cloud presets that are disabled), say so in ONE sentence before anything else, then offer the local route (presets_list). Never silently substitute and generate.
+2. **Vague brief → one question.** "生成一段东西" / "做个视频" with no subject or duration: ask one short question (subject + length) before spending GPU. A clear brief needs no question.
+3. **Long jobs are tickets, not loops.** fast/quality clips, 15 s renders and storyboard/director runs take 5–40 min. Wait with `job_wait(job_id)` / `storyboard_wait(run_id)` (server-side long-poll, ≤55 s per call, returns early on change; reply carries `eta_s`, `done`, `next`) — never `sleep`. At most 3 waits per turn; then END the turn with the job_id / run_id, `eta_s`, and "说一声我再查". NEVER say you are monitoring, polling or watching in the background: you are not; only a person's next message resumes you.
+4. **Exact tool names.** Media tools are `mcp__plugin_vagaa-media_media__<tool>` (e.g. `…media__presets_list`, `…media__video_status`); never shorten or hyphenate the prefix.
+5. **Results carry the ticket.** Every reply that produced media ends with: asset page URL, job_id, preset + seed, and what to say to iterate.
+6. **Read the brief forms first.** `presets_list()` is a one-screen summary (use `brief=false` only when a parameter is missing); `assets_search` rows are brief (`full=true` or `asset_get` for everything). `video_review` frames: 8 is enough for a draft; 16 costs ~4 GiB on the language node.
+
 
 # Media production on the cluster (core loop)
 
