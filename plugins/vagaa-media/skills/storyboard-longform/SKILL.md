@@ -14,7 +14,6 @@ Facts (shot limits, timings, review gate, continuity modes): `../_shared/cluster
 Reference images / identity across shots is split: cross-shot continuity is this skill; reference-driven generation is `image-edit-and-reference`.
 
 > Waiting: use `storyboard_wait(run_id)` (server-side, ≤55 s per call, returns when a shot finishes or the run ends) instead of sleeping between `storyboard_status` calls; end the turn with run_id + eta after at most 3 waits.
-
 ## 0. Brief before shots (the producer's part; the 2026-09-09 trial film passed every technical review and was judged wrong on
 emotion, tone, scene and plot because it had none — `tools/evals/plugin-trial-20260909/`)
 Five lines at the top of the plan notes, judged before any technique: 1) one sentence of what happens; 2) genre and tone (what the
