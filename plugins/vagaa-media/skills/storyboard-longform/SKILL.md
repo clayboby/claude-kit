@@ -16,10 +16,8 @@ Reference images / identity across shots is split: cross-shot continuity is this
 > Waiting: use `storyboard_wait(run_id)` (server-side, ≤55 s per call, returns when a shot finishes or the run ends) instead of sleeping between `storyboard_status` calls; end the turn with run_id + eta after at most 3 waits.
 ## 0. Brief before shots (the producer's part; the 2026-09-09 trial film passed every technical review and was judged wrong on
 emotion, tone, scene and plot because it had none — `tools/evals/plugin-trial-20260909/`)
-Five lines at the top of the plan notes, judged before any technique: 1) one sentence of what happens; 2) genre and tone (what the
-cold or the light means); 3) what the viewer feels at start / middle / end; 4) references (a film scene or asset id; note which same-brief constraints its original media actually demonstrates);
-5) don'ts (smiles, bright streets, storybook look, music, happy ending…). Each shot then names its emotion and the character's physical
-state before its action. Templates: LOOK Studios and WKKF briefs, cited in `reference/research/20260909-human-vs-ai-h3-prompts.md` §5.
+Five lines at the top of the plan notes, judged before any technique: 1) one sentence of what happens; 2) genre and tone (what the cold or the light means); 3) what the viewer feels at start / middle / end; 4) references (a film scene or asset id; note which same-brief constraints its original media actually demonstrates);
+5) don'ts (smiles, bright streets, storybook look, music, happy ending…). Each shot then names its emotion and the character's physical state before its action. Templates: LOOK Studios and WKKF briefs, cited in `reference/research/20260909-human-vs-ai-h3-prompts.md` §5.
 
 ## 1. Plan
 `storyboard_plan(text, style?, characters?, target_seconds?, shot_seconds=5, language?)` → `plan_id` + `plan` + `shot_prompts`.
@@ -28,10 +26,9 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
   or a **one-line brief** with `target_seconds`.
 - Pass `characters={name: {"appearance": ...}}` when the cast is known: the planner repeats the sheet in every shot to guide faces and
   clothes; inspect the rendered shots to verify identity. Give every recurring character the same name in every shot.
-- **Set sheet, same rule as the cast**: decide the location, the surface the subject sits on, the light and the time of day ONCE and write that
-  sentence into EVERY shot that stays in the scene (e.g. "on the same warm light-oak tabletop beside the sunny kitchen window, soft morning
-  light"). A shot that leaves the surface unspecified or asks for a "clean background" is rendered on a different table (product ad 09-15:
-  shots 1/3 came out on white, 2/4 on oak). Change the set only when the script changes scene, and say so in that shot.
+- **Set sheet, same rule as the cast**: decide location, the surface the subject sits on, light and time of day ONCE and write that sentence into
+  EVERY shot that stays in the scene ("on the same warm light-oak tabletop beside the sunny kitchen window, soft morning light"). A shot that leaves
+  the surface unspecified or asks for a "clean background" is rendered on a different table (product ad 09-15: shots 1/3 white, 2/4 oak). Change the set only when the script changes scene, and say so in that shot.
 - Read `plan.shots[*]` and `shot_prompts` (the exact H3 prompts the runner will send; they carry the planner's own `Style:` / `Location:` prefixes —
   0.6.0 does not route storyboard prompts through `prompt_rewrite`). Fix wrong beats, split shots whose dialogue does not fit (~3 words/s, 1 s
   speech-free margin at both ends), set `transition: "continue"` only when the next shot really continues in the same place; then
@@ -50,8 +47,7 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
   `below_threshold`, `notes`. A `below_threshold: true` shot was kept as the best of its attempts: read `review_summary`, fix that shot's prompt in the
   plan using `storyboard_plan_update`, then resume the latest run. Changed shot fingerprints render again; unchanged completed shots are reused.
   Continuity may invalidate downstream shots too; a low score alone does not force a redo. `seams_cut` lists continuations downgraded to hard cuts.
-- **Interrupted runs**: `storyboard_run(resume_run_id=<run>)` ALONE continues after a restart / timeout — done shots reused, an in-flight backend job
-  adopted; a run is continued at most once. `blocked` is not terminal: the reply names the shot job and the actions; `submission_unknown` /
+- **Interrupted runs**: `storyboard_run(resume_run_id=<run>)` ALONE continues after a restart / timeout — done shots reused, an in-flight backend job adopted; a run is continued at most once. `blocked` is not terminal: the reply names the shot job and the actions; `submission_unknown` /
   `cancel_pending` / `cancel_unconfirmed` need `job_recover` by a person (see `media-production`) before a resume is accepted.
 - Every shot is also a normal job: `jobs_list(service="shot")`, `video_review(source=job_id)` for a second opinion, `asset_get(asset_id)` per shot.
 
@@ -72,8 +68,7 @@ director_run(segments=[
 director_status(run_id) → queued|running|completed|failed|lost ; director_fetch(run_id) → url / asset_id / asset_url
 ```
 - `style` is prefixed to EVERY segment (the node reads segment prompts only): a short look-and-medium line; `idempotency_key` = your plan id (a retry returns the same run).
-- `style` is not a set: put the location / surface / light sentence (the set sheet above) inside every segment prompt as well, verbatim, unless that
-  segment deliberately changes scene. Segments are rendered independently, so anything not repeated is re-imagined per shot.
+- `style` is not a set: the set-sheet sentence goes inside EVERY segment prompt verbatim (segments render independently; anything not repeated is re-imagined per shot).
 - `mode` is inferred from the media given. One plan is one timeline kind: t2v segments may sit beside fl2v OR r2v ones, but fl2v and r2v
   cannot share a plan and v2v is always alone (the call is rejected with `invalid_argument`, nothing is uploaded). An explicit mode
   without its media (r2v with no refs, fl2v with no frame) is rejected too — the node would silently fall back to plain t2v.
@@ -83,8 +78,7 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 - Draft = 832×480 (default). Final = width 1344, height 768 (7:4, not exact 16:9) — same call, ~4× the time. Never iterate prompts on a final.
 - fl2v with only a first frame tends to stay still: give it an end frame or write the movement beat by beat.
 - r2v references live on the segment (the node ignores plan-level references): always attach `ref_images`/`ref_audios` to the segment that uses them and cite `<Picture N>` / `<Audio N>` in that prompt.
-- `video_submit(prompt, preset="director_t2v")` runs the same director graph for ONE text segment — a quick single clip on the
-  director models; multi-segment or media-driven work goes through `director_run`.
+- `video_submit(prompt, preset="director_t2v")` runs the same director graph for ONE text segment — a quick single clip on the director models; multi-segment or media-driven work goes through `director_run`.
 - 0.7.1 character table — declare once, mention anywhere:
   ```
   director_run(characters={"小明": {"image": "as-…", "voice": "as-…"}, "阿花": "as-…"}, language="Chinese",
@@ -95,8 +89,7 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   with lips closed. Characters cannot be mentioned in a segment that carries a first/last frame or a source video (rejected before upload).
 - 0.7.1 final quality: `refine="latent_upscale"` (+ `refine_width=1344, refine_height=768`) enlarges the draft's H3 latent with the 3D
   upscaler in the same job — no second sampling; `director_fetch` reports `refine_applied` (false + a warning means the node fell back
-  to the draft). In fl2v plans the given frames pass through the upscaler too. Iterate prompts on drafts, add `refine` only for the
-  accepted plan. (Second sampling is exposed as refine=upscale; check its result flag.) Spoken lines never carry tags: an `@alias` inside a line someone speaks
+  to the draft). In fl2v plans the given frames pass through the upscaler too. Iterate prompts on drafts, add `refine` only for the accepted plan. (Second sampling is exposed as refine=upscale; check its result flag.) Spoken lines never carry tags: an `@alias` inside a line someone speaks
   becomes the plain name, while the character is still attached.
 - Measured limits (each number has a file behind it; `tools/evals/hypotheses-20260909/RESULTS.md` = R):
   · Speech: one Mandarin line of up to 26 chars fits a 5 s segment (spoken in ≤4.0 s, 2 seeds; R E1); the server refuses ~0.16 s/char + 0.5 s.
