@@ -1,7 +1,7 @@
 ---
 name: storyboard-longform
 description: Load for anything longer than one clip or with more than one shot: short film, ad, promo, MV, short drama, story adaptation, script to video. 中文触发：分镜、镜头表、短片、宣传片、广告片、MV、短剧、剧本、列分镜、第 N 镜改一下、开拍、继续拍、接着上次。Turns a brief into a shot list (storyboard_plan), edits shots (storyboard_plan_update), keeps characters consistent, runs/resumes/assembles (storyboard_run / director_run), and how to report a long run to the user.
-verified_against: media-mcp 0.7.40 (2026-09-15)
+verified_against: media-mcp 0.7.41 (2026-09-15)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 when_to_use: 用户要多镜头、要分镜、要改某一镜、要开拍/续拍时加载；单镜 10 秒以内的小片用 media-production。
@@ -28,6 +28,10 @@ state before its action. Templates: LOOK Studios and WKKF briefs, cited in `refe
   or a **one-line brief** with `target_seconds`.
 - Pass `characters={name: {"appearance": ...}}` when the cast is known: the planner repeats the sheet in every shot to guide faces and
   clothes; inspect the rendered shots to verify identity. Give every recurring character the same name in every shot.
+- **Set sheet, same rule as the cast**: decide the location, the surface the subject sits on, the light and the time of day ONCE and write that
+  sentence into EVERY shot that stays in the scene (e.g. "on the same warm light-oak tabletop beside the sunny kitchen window, soft morning
+  light"). A shot that leaves the surface unspecified or asks for a "clean background" is rendered on a different table (product ad 09-15:
+  shots 1/3 came out on white, 2/4 on oak). Change the set only when the script changes scene, and say so in that shot.
 - Read `plan.shots[*]` and `shot_prompts` (the exact H3 prompts the runner will send; they carry the planner's own `Style:` / `Location:` prefixes —
   0.6.0 does not route storyboard prompts through `prompt_rewrite`). Fix wrong beats, split shots whose dialogue does not fit (~3 words/s, 1 s
   speech-free margin at both ends), set `transition: "continue"` only when the next shot really continues in the same place; then
@@ -68,6 +72,8 @@ director_run(segments=[
 director_status(run_id) → queued|running|completed|failed|lost ; director_fetch(run_id) → url / asset_id / asset_url
 ```
 - `style` is prefixed to EVERY segment (the node reads segment prompts only): a short look-and-medium line; `idempotency_key` = your plan id (a retry returns the same run).
+- `style` is not a set: put the location / surface / light sentence (the set sheet above) inside every segment prompt as well, verbatim, unless that
+  segment deliberately changes scene. Segments are rendered independently, so anything not repeated is re-imagined per shot.
 - `mode` is inferred from the media given. One plan is one timeline kind: t2v segments may sit beside fl2v OR r2v ones, but fl2v and r2v
   cannot share a plan and v2v is always alone (the call is rejected with `invalid_argument`, nothing is uploaded). An explicit mode
   without its media (r2v with no refs, fl2v with no frame) is rejected too — the node would silently fall back to plain t2v.
