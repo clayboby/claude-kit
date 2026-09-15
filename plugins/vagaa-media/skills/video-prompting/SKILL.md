@@ -1,7 +1,7 @@
 ---
 name: video-prompting
 description: Load BEFORE writing, rewriting or diagnosing a MiniMax-H3 video prompt: spoken dialogue, on-screen text, camera moves, style words, reference-aware wording, seed A/B, why a clip came out wrong. 中文触发：提示词、怎么写、画面文字、店名要出现在画面里、台词、对白、运镜、换个 seed、为什么不像、优化一下描述。Uses prompt_rewrite for T2V drafts and explains what the local grammar accepts.
-verified_against: media-mcp 0.7.42 (2026-09-15)
+verified_against: media-mcp 0.7.45 (2026-09-16)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 when_to_use: 要写或改视频提示词、要画面里出现文字、要台词、要解释为什么生成得不对时加载。
@@ -61,6 +61,8 @@ prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset":
 | wrong language spoken | wrong `[Language]` tag or a translated line | tag = the line's language, copy the line verbatim |
 | character drifts (clothes, age) | vague subject line | one explicit subject sentence: age, build, clothing, colour |
 | action not performed | two actions in one clause | one beat per sentence, in playback order |
+| closing beat blows up (grabs or lifts the prop, yanks the lamp, loud thump, toothy grin) | any hand action written into the last continued segment; wording like "gentle", "quiet", "closed-mouth" did not restrain it across three seeds-identical retries (C03 v1–v3, 2026-09-15) | make the closing beat hand-free: posture, breath, eyes, a faint closed-mouth smile; keep props untouched (C03 v4/v5 passed) |
+| black bars left and right (a product / still-life shot rendered as a narrow frame inside the 16:9 canvas) | seed-bound: the same prompt on another seed fills the frame; adding "no black borders / no letterboxing / no pillarboxing" to the prompt changed nothing (C02 purple-jar, seed 9132006 vs 9132016, `reference/c02-styles-20260915`) | keep the prompt, change the seed; do not spend a run on negative wording |
 | sound does not match the brief | soundscape repeats dialogue or adds unrequested layers | requested diegetic sounds in `overall_soundscape`; requested background score in `non_diegetic_music`; keep source music inside the scene description |
 
 ## 4. A/B two prompts honestly
