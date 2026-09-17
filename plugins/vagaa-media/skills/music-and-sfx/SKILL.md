@@ -1,7 +1,7 @@
 ---
 name: music-and-sfx
 description: Load for background music, BGM, soundtrack, jingle, beat/rhythm track, sound effects or ambience for a video. 中文触发：配乐、背景音乐、BGM、音效、环境音、卡点音乐、来段音乐、vlog 开头那种。Plans music and SFX separately (music_submit presets bgm-draft/bgm-final/sfx), explains mixing limits. NOT for narration or spoken lines — that is tts in media-production.
-verified_against: media-mcp 0.7.52 (2026-09-17)
+verified_against: media-mcp 0.7.53 (2026-09-17)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 when_to_use: 用户要音乐、音效、氛围声时加载；要人声旁白/台词时不加载本 skill。
@@ -25,8 +25,8 @@ by ear / rubric, then re-submit the **same prompt + seed + bpm + key** on `prese
 key). Current SFX accepts 1–60 seconds; verify the live schema/preset before choosing the required length. Two to eight seconds is only a typical short cue. A multi-seed lottery is normal for SFX. Loops: ask for "seamless loop" and cross-fade in the editor; sample-exact loops are not guaranteed.
 
 ## 3. Levels and mixing — `video_audio_level` (0.7.49–0.7.51)
-- H3 clips carry their own generated audio, uneven between shots and often quiet. `video_audio_level(source)` levels each shot to `target_lufs` (−20) with true-peak headroom, fades the cuts, and lays a bed; `music=<asset>` mixes ONE track under the whole film (trimmed, 0.3 s in / 1.5 s out, never looped, `music_db` −14 by default), `ambience=<asset ≥ film length>` replaces the self-bed with a generated room tone (`sfx` preset, 30–60 s, "constant and even, no events") at `bed_db`. Music, bed and shots are budgeted together so the mix never passes −2 dBTP; the result's `mix_true_peak_dbtp` says what came out.
-- Ask for the music with `music_submit` first (`bgm-draft` → `bgm-final`, same seed), then level; do not write a score into each director segment (each segment gets its own piece). A dialogue film usually wants `bed_from_shot=0` + `ambience`, not a self-bed.
+- H3 clips carry their own generated audio, uneven between shots and often quiet. `video_audio_level(source)` levels each shot to `target_lufs` (−20) with true-peak headroom and fades the cuts (no bed by default, 0.7.53); `music=<asset>` mixes ONE track under the whole film (trimmed, 0.3 s in / 1.5 s out, never looped, `music_db` −14 by default), `ambience=<asset ≥ film length>` replaces the self-bed with a generated room tone (`sfx` preset, 30–60 s, "constant and even, no events") at `bed_db`. Music, bed and shots are budgeted together so the mix never passes −2 dBTP; the result's `mix_true_peak_dbtp` says what came out.
+- Ask for the music with `music_submit` first (`bgm-draft` → `bgm-final`, same seed), then level; do not write a score into each director segment (each segment gets its own piece). A bed is a taste decision, not a default: `bed_from_shot` (the film's own audio looped) is not recommended — it carried a wrong shot-1 texture over all of C04 (2026-09-17); if a bed is wanted, generate a neutral room tone and pass `ambience=` at `bed_db` −6 or lower, and listen before delivering.
 - Burning subtitles and a delivery-loudness master pass (−14 LUFS / −1.5 dBTP for YouTube-style platforms; 0.7.52 candidate) are **not exposed as MCP tools** in the verified deployment; hand the clip and text to the editor and say so rather than claiming a mix was mastered.
 
 ## 4. Queueing reality
