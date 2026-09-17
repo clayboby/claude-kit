@@ -27,7 +27,7 @@ key). Current SFX accepts 1–60 seconds; verify the live schema/preset before c
 ## 3. Levels and mixing — `video_audio_level` (0.7.49–0.7.51)
 - H3 clips carry their own generated audio, uneven between shots and often quiet. `video_audio_level(source)` levels each shot to `target_lufs` (−20) with true-peak headroom, fades the cuts, and lays a bed; `music=<asset>` mixes ONE track under the whole film (trimmed, 0.3 s in / 1.5 s out, never looped, `music_db` −14 by default), `ambience=<asset ≥ film length>` replaces the self-bed with a generated room tone (`sfx` preset, 30–60 s, "constant and even, no events") at `bed_db`. Music, bed and shots are budgeted together so the mix never passes −2 dBTP; the result's `mix_true_peak_dbtp` says what came out.
 - Ask for the music with `music_submit` first (`bgm-draft` → `bgm-final`, same seed), then level; do not write a score into each director segment (each segment gets its own piece). A dialogue film usually wants `bed_from_shot=0` + `ambience`, not a self-bed.
-- Burning subtitles is still not an MCP tool; hand the clip and text to the editor. Delivery loudness (−14 LUFS / −1.5 dBTP for YouTube-style platforms) is a separate mastering pass not yet exposed (0.7.52 candidate); say so rather than claiming it.
+- Burning subtitles and a delivery-loudness master pass (−14 LUFS / −1.5 dBTP for YouTube-style platforms; 0.7.52 candidate) are **not exposed as MCP tools** in the verified deployment; hand the clip and text to the editor and say so rather than claiming a mix was mastered.
 
 ## 4. Queueing reality
 Music models live only on `comfy2` (spark-03), so a music job queues behind any H3 draft or final running there: submit BGM / SFX first or accept the
