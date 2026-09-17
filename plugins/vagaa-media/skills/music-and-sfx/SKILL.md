@@ -24,11 +24,10 @@ by ear / rubric, then re-submit the **same prompt + seed + bpm + key** on `prese
 `music_submit(prompt=<describe the sound, not music>, preset="sfx", seconds=4, seed=<fixed>)` → FLAC (Stable Audio 3 small-sfx; no lyrics / bpm /
 key). Current SFX accepts 1–60 seconds; verify the live schema/preset before choosing the required length. Two to eight seconds is only a typical short cue. A multi-seed lottery is normal for SFX. Loops: ask for "seamless loop" and cross-fade in the editor; sample-exact loops are not guaranteed.
 
-## 3. Levels and mixing — what exists today
-- H3 clips carry their own generated audio and come out quiet (≈ −34 dB in a reference measurement). Loudness normalisation, mixing a BGM under a
-  clip and burning subtitles are **not exposed as MCP tools** in the verified deployment. Hand the clip and the music
-  asset URLs to the user's editor with the target level; do not claim a mix was made.
-- When a mix must happen on the cluster anyway, `workflow_submit` with an operator-provided ffmpeg / ComfyUI audio graph is the only route; say so.
+## 3. Levels and mixing — `video_audio_level` (0.7.49–0.7.51)
+- H3 clips carry their own generated audio, uneven between shots and often quiet. `video_audio_level(source)` levels each shot to `target_lufs` (−20) with true-peak headroom, fades the cuts, and lays a bed; `music=<asset>` mixes ONE track under the whole film (trimmed, 0.3 s in / 1.5 s out, never looped, `music_db` −14 by default), `ambience=<asset ≥ film length>` replaces the self-bed with a generated room tone (`sfx` preset, 30–60 s, "constant and even, no events") at `bed_db`. Music, bed and shots are budgeted together so the mix never passes −2 dBTP; the result's `mix_true_peak_dbtp` says what came out.
+- Ask for the music with `music_submit` first (bgm-draft → bgm-final, same seed), then level; do not write a score into each director segment (each segment gets its own piece). A dialogue film usually wants `bed_from_shot=0` + `ambience`, not a self-bed.
+- Burning subtitles is still not an MCP tool; hand the clip and text to the editor. Delivery loudness (−14 LUFS / −1.5 dBTP for YouTube-style platforms) is a separate mastering pass not yet exposed (0.7.52 candidate); say so rather than claiming it.
 
 ## 4. Queueing reality
 Music models live only on `comfy2` (spark-03), so a music job queues behind any H3 draft or final running there: submit BGM / SFX first or accept the
