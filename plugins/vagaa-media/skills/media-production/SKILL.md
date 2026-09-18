@@ -1,9 +1,9 @@
 ---
 name: media-production
 description: MUST load FIRST for any request to make, find, review or deliver media through the media gateway: images, video clips, speech/narration, translation, finding earlier work, reviewing a clip, draft→final. 中文触发：帮我做个视频、画张图、整张图、念出来、配音、翻译、找之前做的、审一下、哪里不行、出正式版、再来一张、换个风格、用 sora/可灵/runway 生成。Covers image_submit, video_submit (draft → video_review → same-seed final), tts, translate, assets_search, video_review, job polling and delivery, and the behaviour rules for unsupported models, vague briefs and long jobs.
-verified_against: media-mcp 0.7.54 (2026-09-18)
+verified_against: media-mcp 0.7.55 (2026-09-19)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
+shared_facts_sha256: 4d513d16055b7f64dc584b15d0b922d67dc1560a33c3603014844fc4656c6afa
 when_to_use: 用户一提到出图、出片、配音、翻译、找作品、审片，先加载本 skill 再调任何 media 工具；用户点名不存在的模型（sora、runway、可灵、veo）时也先加载。
 ---
 ## 0. Behaviour rules (2026-09-14, from the pty trial)
@@ -69,6 +69,13 @@ Raw ComfyUI graphs: `workflow_submit(graph_json, overrides)` → `workflow_statu
   `cancel_unconfirmed`. **Never just re-submit such a job** — the node may be generating it; check the node, then attach / resubmit / abandon.
 - Cloud presets have `cloud: true` and `available` on each video/image/music/voice entry; there is no required top-level `cloud` section. A disabled entry is not callable. Follow the user's budget for paid generations.
 - `compliance_review(source)` / `compliance_status(job_id)` = the licensed publish gate (cloud, only when keyed).
+
+- **Offline embedding batches (0.7.55)** — `embed_batch_submit(items, model?, tag?)` for bulk ingestion (family album, project corpora):
+  items are texts or `{type: image|video, source: asset id / job id / allow-listed URL / data: URL, text?: caption}`. It returns an
+  `embed-…` job at once and runs ONLY while the film node sharing the embedding GPU is idle (a WeMM burst made an H3 draft 2× slower,
+  measured 2026-09-19), so a big batch may pause for an hour behind a film job — that is by design, not a fault. Do not `job_wait`
+  on a large batch: submit, tell the user the id, come back later with `embed_batch_status` / `jobs_list(service=embed)`, then
+  `embed_batch_fetch` for the JSONL vectors (one line per item). For ONE query-time embedding use the gateway `/v1/embeddings`.
 
 ## 5. Etiquette
 Always pass and record a `seed`. On `backend_unreachable` / `queue_full` wait and retry, never spam. `quality` is for one approved candidate.

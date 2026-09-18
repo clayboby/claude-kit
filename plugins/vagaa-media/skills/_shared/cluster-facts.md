@@ -23,6 +23,8 @@ Cloud-only, present only when the matching cloud entry is enabled (none is, 2026
   reverse prompts all use it. `presets_list.models` is the live list.
 - TTS: Qwen3-TTS-12Hz-1.7B on spark-04 `tts-lane` (≈0.75× real time per sentence, batch-decoded); translation: Hy-MT2 on spark-04.
 
+- **Bulk embeddings are gated (0.7.55).** WeMM (spark-03) shares its GPU with `comfy2`; `embed_batch_*` jobs run only while `comfy2` has been idle 30 s and pause within one chunk when film work arrives (an H3 draft ran 2× slower under a WeMM burst, 2026-09-19). One query-time embedding still goes straight through the gateway `/v1/embeddings`.
+
 ## Video presets (H3 on the ComfyUI lane, 24 fps)
 `video_submit` accepts integer `seconds` from 1 through `presets_list.defaults.max_seconds` (15 in production, 2026-09-13); token limits may be stricter. The [official H3 output range](https://github.com/MiniMax-AI/MiniMax-H3#readme), 4–15 s, is model guidance, not the gateway's minimum accepted duration. Frames snap to 17n+5: 4 s → 107, 5 s → 124, 15 s → 362; inspect the returned duration.
 | preset | size / steps | ≈ time | use |
