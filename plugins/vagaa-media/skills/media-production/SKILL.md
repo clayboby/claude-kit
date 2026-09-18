@@ -1,7 +1,7 @@
 ---
 name: media-production
 description: MUST load FIRST for any request to make, find, review or deliver media through the media gateway: images, video clips, speech/narration, translation, finding earlier work, reviewing a clip, draft→final. 中文触发：帮我做个视频、画张图、整张图、念出来、配音、翻译、找之前做的、审一下、哪里不行、出正式版、再来一张、换个风格、用 sora/可灵/runway 生成。Covers image_submit, video_submit (draft → video_review → same-seed final), tts, translate, assets_search, video_review, job polling and delivery, and the behaviour rules for unsupported models, vague briefs and long jobs.
-verified_against: media-mcp 0.7.53 (2026-09-17)
+verified_against: media-mcp 0.7.54 (2026-09-18)
 shared_facts: ../_shared/cluster-facts.md
 shared_facts_sha256: 14352cbee7d70dd8a43326b3f017f499182c01134736f077b3b54236a217d9e6
 when_to_use: 用户一提到出图、出片、配音、翻译、找作品、审片，先加载本 skill 再调任何 media 工具；用户点名不存在的模型（sora、runway、可灵、veo）时也先加载。
@@ -50,6 +50,9 @@ Use the exact qualified tool names and input schemas exposed in this session; ne
    a `prompt_id` written for `draft` is accepted unchanged on `fast`/`daily`/`quality` (same 5 s); anything else is refused, never re-rewritten.
    Fix missing actions, wrong references or style drift before final rendering; a larger preset is not a repair operation. Recheck the final itself.
 4. **Deliver.** `video_fetch(job_id)` → `url` (temporary browser link), `asset_id`, authenticated stable `asset_url`. Give the user `url` unchanged; keep `asset_id`/`job_id` for reuse. Save an approved deliverable with `asset_tag(asset_id, starred=true)` or a collection; an unstarred draft may expire after 7 days. Media input and link contracts: `../_shared/media-inputs.md`.
+   **A link is the film it names (0.7.54, from the C04 chain trial).** While the final render is still `running`, answer "成片链接" with
+   its `run_id`/`job_id`, elapsed time and ETA — never hand over the draft URL as the finished film. If you do include the draft's URL
+   for reference, label it 草稿 in the same sentence. After `*_fetch` on the final, deliver that URL and say which version it is.
 Images: `image_submit(prompt, preset="krea-default", seed, width, height)`; `krea-169` defaults to 1344×768 (7:4). For exact 16:9, explicitly pass `width=1024, height=576` and check the output dimensions; poll `image_status(job_id)`, then `image_fetch(job_id)`.
 Raw ComfyUI graphs: `workflow_submit(graph_json, overrides)` → `workflow_status` / `workflow_fetch` — ask the operator for a template first.
 
