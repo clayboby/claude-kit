@@ -3,7 +3,7 @@ name: image-edit-and-reference
 description: Load when the user wants to CHANGE an existing image or video rather than make a new one, or keep something consistent: edit/retouch an image, change clothes or background, swap a person, transfer motion from a video, animate a still, use a reference image, keep a character or product identical across shots. 中文触发：改图、修图、换装、换背景、换人、换脸、动作迁移、让这张图动起来、参考图、保持一致、同一个人。Tells which routes exist today (Director fl2v/ref2v/v2v, reverse_prompt, raw workflow) and which have NO tool yet, so you can say so honestly.
 verified_against: media-mcp 0.8.2 (2026-09-23)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: fb540c67fb62dfa8c9da38e35b49bf7bbdaaf59c94c6fb649b3d8c83051f20ca
+shared_facts_sha256: 4c1f5d313ea1790512d55c0711fc5b37d46451ed4a23f595cc71f7e859efd3f2
 when_to_use: 用户拿着已有的图/视频要改、要保持一致、要参考时加载；只是从零画一张新图用 media-production。
 ---
 
@@ -56,7 +56,7 @@ differ between `comfy` and `comfy2`); never invent node ids. Outputs are indexed
 - Lead with the change, then say what stays: "change the background to a snowy mountain; keep the boy, the sandcastle and the bucket exactly as they are". Point at a reference for identity instead of describing a face in words.
 - Words that must appear on the picture go in quotes, character for character, in the language wanted.
 - The output follows images[0]'s shape. For a new scene built from several pictures (group photo, poster), pass `aspect_ratio="3:2"` / `"2:3"`, or let the rewriter choose.
-- **The rewriter runs by default** (the authors' PE-I2I prompt; the cluster's Qwen looks at the pictures, +15–60 s) and the reply shows the directive it sent (`prompt`, `prompt_id`). `rewrite="off"` sends your words as written — use it when you already wrote a precise `<imageN>` instruction. `prompt_rewrite(text, target={"tool": "image_edit"}, references=[…the same pictures…])` previews the directive first; `image_edit(images=[…], prompt_id=…)` then runs it on exactly those pictures.
+- **Your instruction is sent as written** (every edit preset defaults to `rewrite="off"`). For a vague request, `rewrite="auto"` first lets the official PE-I2I rewriter (the authors' prompt; the cluster's Qwen looks at the pictures, +15–60 s before the job id) turn it into a precise `<imageN>` directive, and the reply shows what it sent (`prompt`, `prompt_id`). A clear instruction gains nothing from it (four A/B edits, 2026-09-23). `prompt_rewrite(text, target={"tool": "image_edit"}, references=[…the same pictures…])` previews the directive first; `image_edit(images=[…], prompt_id=…)` then runs it on exactly those pictures.
 - Budget: `resolution` is the per-picture pixel side (default PRO 6000 2048, GB10 1024); the node's total is capped (21 MP / 10.5 MP) and lowered automatically — the reply says so. More pictures = longer: one ≈ 1.5 min, ten ≈ 4 min on the PRO 6000.
 - Six or more people composed into one scene: identities may mix (measured 2026-09-23); do not promise a one-to-one likeness. Up to five references (one person + four garments, ten furniture pieces) were reliable.
 - Check an edit side by side with the original (§3): "only change X" is not proven by one score.

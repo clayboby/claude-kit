@@ -57,14 +57,17 @@ The five local video presets (`draft`, `preset="director_t2v"`, `fast`, `daily`,
 | `qi21-quality` | Qwen-Image 2.1, 40 steps, cfg 3.5 | 2048² on every node (≈ 103 s; ≈ 390 s on GB10) | one hard final |
 `aspect_ratio="3:2"` sizes the picture to each node's pixel budget; `width`/`height` pin it instead. `krea-169` is 7:4, not 16:9: for an
 exact 16:9 Krea image pass `width=1024, height=576` (checked 2026-09-13). qi21 output is always a PNG with an alpha channel.
-**The qi21-* presets rewrite first** with the official Qwen-Image 2.1 prompt enhancer (the authors' PE-T2I system prompt, run by the
-cluster's Qwen; +15–40 s): a long English observer paragraph plus an aspect ratio; quoted words are checked verbatim. `rewrite="off"`
-sends your words as written; an English prompt of 120+ words is kept as written; a defaulted rewrite that fails falls back to your
-words with a warning. The reply carries `prompt` (the text sent), `prompt_id` (`prompt_get`) and `per_node` sizes.
+**Only `qi21-text` rewrites by default** with the official Qwen-Image 2.1 prompt enhancer (the authors' PE-T2I system prompt, run by the
+cluster's Qwen; +15–45 s BEFORE the job id comes back): a long English observer paragraph plus an aspect ratio; quoted words are checked
+verbatim. In the 2026-09-23 A/B it fixed a misspelled title and a missing step; on other briefs it gained nothing or lost (a night scene came
+out too dark, a transparent sticker lost its transparency), so `qi21-t2i` / `qi21-scene` / `qi21-quality` / `qi21-rgba` send your words as
+written unless you pass `rewrite="auto"`. On `qi21-text`, `rewrite="off"` skips it; an English prompt of 120+ words is kept as written; a
+defaulted rewrite that fails falls back to your words with a warning. The reply carries `prompt` (the text sent), `prompt_id` and `per_node` sizes.
 **`image_edit` presets:** `qi21-edit` (default; Qwen-Image 2.1; 1–10 pictures; PRO 6000 40 steps at a 2K budget, GB10 25 steps at 1 MP),
 `qi21-edit-quality` (cfg 3.5 + negative, twice the time), `qwen-edit-2511` (the old model, 1–3 pictures, fallback only). Reference
 pixels are capped per node — PRO 6000 21 MP (1–5 pictures at 2048, 6 at 1856, 7–8 at 1600, 9–10 at 1440; ten at 2048 ran out of
-memory), GB10 10.5 MP — and the reply warns when it lowered `resolution`. The PE-I2I rewriter looks at the pictures first (+15–60 s).
+memory), GB10 10.5 MP — and the reply warns when it lowered `resolution`. The instruction is sent as written; `rewrite="auto"` runs the
+official PE-I2I rewriter on the pictures first (+15–60 s; no gain on four clear instructions in the A/B — use it for a vague one).
 Six or more people in one picture: identities may mix (2026-09-23, IMG21-GB10). Cloud image presets (unkeyed): `qwen-image-pro`,
 `seedream-pro`, `flux2-pro`. Raw graphs: `workflow_submit` (ask for a template first; they run on the GB10 nodes only).
 

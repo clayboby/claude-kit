@@ -3,7 +3,7 @@ name: media-production
 description: MUST load FIRST for any request to make, find, review or deliver media through the media gateway: images, video clips, speech/narration, translation, finding earlier work, reviewing a clip, draft→final. 中文触发：帮我做个视频、画张图、整张图、念出来、配音、翻译、找之前做的、审一下、哪里不行、出正式版、再来一张、换个风格、用 sora/可灵/runway 生成。Covers image_submit, video_submit (draft → video_review → same-seed final), tts, translate, assets_search, video_review, job polling and delivery, and the behaviour rules for unsupported models, vague briefs and long jobs.
 verified_against: media-mcp 0.8.2 (2026-09-23)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: fb540c67fb62dfa8c9da38e35b49bf7bbdaaf59c94c6fb649b3d8c83051f20ca
+shared_facts_sha256: 4c1f5d313ea1790512d55c0711fc5b37d46451ed4a23f595cc71f7e859efd3f2
 when_to_use: 用户一提到出图、出片、配音、翻译、找作品、审片，先加载本 skill 再调任何 media 工具；用户点名不存在的模型（sora、runway、可灵、veo）时也先加载。
 ---
 ## 0. Behaviour rules (2026-09-14, from the pty trial)
@@ -53,7 +53,7 @@ Use the exact qualified tool names and input schemas exposed in this session; ne
    **A link is the film it names (0.7.54, from the C04 chain trial).** While the final render is still `running`, answer "成片链接" with
    its `run_id`/`job_id`, elapsed time and ETA — never hand over the draft URL as the finished film. If you do include the draft's URL
    for reference, label it 草稿 in the same sentence. After `*_fetch` on the final, deliver that URL and say which version it is.
-Images (0.8.2) — pick by the job, `presets_list(brief=true).image_guide`: photoreal / aesthetic / fast from scratch → `image_submit(prompt, preset="krea-default", seed)` (`krea-169` = 1344×768, 7:4; exact 16:9 = `width=1024, height=576`); exact words on the picture → `preset="qi21-text"` (quote the words); crowds / cities / panoramas → `"qi21-scene"`; transparent PNG → `"qi21-rgba"`; long structured prompt → `"qi21-t2i"`; one hard final → `"qi21-quality"`. Change or combine EXISTING pictures → `image_edit`. Best-looking poster: Krea photo, then `image_edit` adds the text. qi21-* rewrite with the official Qwen prompt enhancer first (+15–40 s; `rewrite="off"` skips it; `aspect_ratio="3:2"` sizes per node); poll `image_status(job_id)`, then `image_fetch(job_id)`.
+Images (0.8.2) — pick by the job, `presets_list(brief=true).image_guide`: photoreal / aesthetic / fast from scratch → `image_submit(prompt, preset="krea-default", seed)` (`krea-169` = 1344×768, 7:4; exact 16:9 = `width=1024, height=576`); exact words on the picture → `preset="qi21-text"` (quote the words); crowds / cities / panoramas → `"qi21-scene"`; transparent PNG → `"qi21-rgba"`; long structured prompt → `"qi21-t2i"`; one hard final → `"qi21-quality"`. Change or combine EXISTING pictures → `image_edit`. Best-looking poster: Krea photo, then `image_edit` adds the text. `qi21-text` rewrites with the official Qwen prompt enhancer first (+15–45 s; `rewrite="off"` skips it; other qi21 presets only with `rewrite="auto"`); `aspect_ratio="3:2"` sizes per node; poll `image_status(job_id)`, then `image_fetch(job_id)`.
 Raw ComfyUI graphs: `workflow_submit(graph_json, overrides)` → `workflow_status` / `workflow_fetch` — ask the operator for a template first.
 
 ## 3. Speech and translation (synchronous, this skill's job)
