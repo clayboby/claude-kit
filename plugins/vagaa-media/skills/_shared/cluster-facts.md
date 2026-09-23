@@ -17,8 +17,9 @@ call `capabilities` (any token, no arguments) before telling anyone a feature do
 and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when this instance is the read-only maintenance reader.
 0.8.1 also sends `notifications/tools/list_changed` when an admin changes your token, so a refused tool may become available mid-session.
 
-## Nodes and lanes (2026-09-23, media-mcp 0.8.2)
-- **comfy-pro = RTX PRO 6000** (the fastest image node; its GPU is shared with a text model). IMAGE ONLY
+## Nodes and lanes (2026-09-23, media-mcp 0.8.4)
+- **comfy-pro = RTX PRO 6000** (the fastest image node; its GPU is shared with its own Qwen3.8-27B, and a job that lands there has its
+  official-PE prompt rewrite done by that 27B, not by the cluster's flash lane). IMAGE ONLY
   (Qwen-Image 2.1 + Krea2 kept loaded): first choice for every `image_submit` preset and `image_edit`; never gets video, music or raw
   graphs. Measured 2026-09-23 (IMG21-PRO6000): Krea 1024² ≈ 5 s; Qwen 2.1 T2I 2K/40 steps ≈ 52 s (cfg 3.5 ≈ 103 s); edit one picture at
   the 2K budget ≈ 85–95 s, three ≈ 190 s, five ≈ 285 s, ten at 1440 ≈ 220 s. Under a busy 27B lane a job can take 2–3× longer.
@@ -27,8 +28,9 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
 - **comfy = spark-04**: overflow for H3 and images; its memory is shared with other always-on services, so H3 lands
   here only when spark-03 is busy. Same image fallback timings as spark-03.
 - ComfyUI runs one queue serially per node: an image queued behind a running H3 job waits for the whole job (+250 s measured).
-- Text/vision lane: one model, `qwen38-flash-next-nvfp4` (spark-01/02, 512K context, multimodal); planner, reviewer, rewriter and
-  reverse prompts all use it. `presets_list.models` is the live list.
+- Text/vision lane: `qwen38-flash-next-nvfp4` (spark-01/02, 512K context, multimodal); planner, reviewer, the H3 rewriter, reverse prompts
+  and the image rewrite of GB10 jobs use it. `Qwen3.8-27B` (PRO 6000, 262K context, multimodal) is a second text model behind the same
+  gateway `/v1` and rewrites the prompts of PRO 6000 jobs. `presets_list.models` is the live list.
 - TTS: Qwen3-TTS-12Hz-1.7B on spark-04 `tts-lane` (≈0.75× real time per sentence, batch-decoded); translation: Hy-MT2 on spark-04.
 
 - **Bulk embeddings are gated (0.7.55).** WeMM (spark-03) shares its GPU with `comfy2`; `embed_batch_*` jobs run only while `comfy2` has been idle 30 s and pause within one chunk when film work arrives (an H3 draft ran 2× slower under a WeMM burst, 2026-09-19). One query-time embedding still goes straight through the gateway `/v1/embeddings`.
