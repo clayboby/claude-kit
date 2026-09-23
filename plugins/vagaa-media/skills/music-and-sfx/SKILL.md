@@ -1,9 +1,9 @@
 ---
 name: music-and-sfx
 description: Load for background music, BGM, soundtrack, jingle, beat/rhythm track, sound effects or ambience for a video. 中文触发：配乐、背景音乐、BGM、音效、环境音、卡点音乐、来段音乐、vlog 开头那种。Plans music and SFX separately (music_submit presets bgm-draft/bgm-final/sfx), explains mixing limits. NOT for narration or spoken lines — that is tts in media-production.
-verified_against: media-mcp 0.8.4 (2026-09-23)
+verified_against: media-mcp 0.8.6 (2026-09-24)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 8163e9c7ef5ac65bd33373037589b0daec45dff288e7a46847f97df5e847b38f
+shared_facts_sha256: 3c0434efd28b74220f7cf97dec3ef559876396b030512e1441ba60b2202ff44c
 when_to_use: 用户要音乐、音效、氛围声时加载；要人声旁白/台词时不加载本 skill。
 ---
 

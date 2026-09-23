@@ -1,9 +1,9 @@
 ---
 name: image-edit-and-reference
 description: Load when the user wants to CHANGE an existing image or video rather than make a new one, or keep something consistent: edit/retouch an image, change clothes or background, swap a person, transfer motion from a video, animate a still, use a reference image, keep a character or product identical across shots. 中文触发：改图、修图、换装、换背景、换人、换脸、动作迁移、让这张图动起来、参考图、保持一致、同一个人。Tells which routes exist today (Director fl2v/ref2v/v2v, reverse_prompt, raw workflow) and which have NO tool yet, so you can say so honestly.
-verified_against: media-mcp 0.8.4 (2026-09-23)
+verified_against: media-mcp 0.8.6 (2026-09-24)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 8163e9c7ef5ac65bd33373037589b0daec45dff288e7a46847f97df5e847b38f
+shared_facts_sha256: 3c0434efd28b74220f7cf97dec3ef559876396b030512e1441ba60b2202ff44c
 when_to_use: 用户拿着已有的图/视频要改、要保持一致、要参考时加载；只是从零画一张新图用 media-production。
 ---
 
@@ -14,7 +14,7 @@ Read this section first: it is the honest capability table. Facts (presets, node
 | need | available now | how |
 |---|---|---|
 | describe an existing image to re-create or vary it | yes | `reverse_prompt(source, style="sd")` → `image_submit`; `style="h3"` → `video_submit`; `style="plain"` → prose |
-| a new image in a chosen composition / size | yes | `image_submit(prompt, preset="krea-default"|"krea-169", seed, aspect_ratio)` for photoreal / aesthetic (posters and covers: `aspect_ratio="2:3"`); `preset="qi21-text"` (typography IS the picture), `"qi21-scene"` (crowds, cities), `"qi21-rgba"` (transparent PNG) — `media-production` owns the choice; → `image_review` |
+| a new image in a chosen composition / size | yes | `image_submit(prompt, preset="krea-default"|"krea-169", seed, aspect_ratio)` for photoreal / aesthetic / portraits / crowds (posters and covers: `aspect_ratio="2:3"`); `preset="qi21-text"` (typography IS the picture), `"qi21-t2i"` (many elements with counts / positions; rewrites by default), `"qi21-rgba"` (transparent PNG) — `media-production` owns the choice; → `image_review` |
 | animate an existing image (image-to-video) | yes, director | `director_run(segments=[{mode:"fl2v", first_frame:<image asset/job/allowlisted URL>, prompt:..., seconds:...}], seed=...)`. Current local `video_submit` T2V presets cannot use an image. `prompt_rewrite` does not cover i2v |
 | keep a character stable across shots of one film | planning support; verify outputs | `storyboard-longform`: the same `characters` sheet in every shot guides identity but does not certify it |
 | instruction-based image editing / multi-reference composition | **yes — `image_edit`** (0.8.2: Qwen-Image 2.1, up to 10 pictures) | `image_edit(images=[<edited>, <ref2>, …], instruction, preset="qi21-edit", seed)`: images[0] is the canvas being changed; §5 below is how to write the instruction. Returns a workflow job → `job_wait` / `workflow_status` → `workflow_fetch`. `preset="qwen-edit-2511"` is the old model (1–3 pictures, `megapixels`, `lightning=true` 4 steps) — only when 2.1 cannot do it. No mask input: say WHERE in words, or circle it on the picture in a colour and name the colour. |
@@ -26,7 +26,7 @@ Read this section first: it is the honest capability table. Facts (presets, node
 | reference character performs a driving video's motion, prompt-controlled background/camera | **yes — `motion_animate`** (0.7.28, Wan-Animate-2) | `motion_animate(driver_video, reference_image, prompt, pose_prompt)`: no mask; framing of reference and driver must match (full body ↔ full body, the #1 failure cause); long videos chained with continue_motion (experimental). ~6 min per 81 frames. |
 | upload a local user file | **no dedicated tool** | A gateway asset or allowlisted URL is required. Report this input gap; do not claim a filesystem path or data URI was accepted |
 
-`krea-169` defaults to 1344×768 (7:4), not exact 16:9. For an exact 16:9 image, explicitly pass `width=1024, height=576` to `image_submit` and verify the original file's dimensions; wording the ratio in a prompt is not a size control.
+`krea-169` is 1928×1088 (16:9, 2 MP) on the PRO 6000 but 1344×768 (7:4) on a GB10 fallback. `aspect_ratio="16:9"` gives ≈16:9 at each node's budget (1920×1088 / 1376×768); for an EXACT 16:9 on every node pass `width=1024, height=576` to `image_submit` and verify the original file's dimensions; wording the ratio in a prompt is not a size control.
 
 When a row says "no dedicated tool": tell the user plainly, offer the nearest available route (often `reverse_prompt` + a new generation, or a hand-built
 ComfyUI graph via `workflow_submit` with the operator's template), and record the gap; never fake the result with a different tool.
