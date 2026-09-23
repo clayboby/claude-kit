@@ -18,13 +18,13 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
 0.8.1 also sends `notifications/tools/list_changed` when an admin changes your token, so a refused tool may become available mid-session.
 
 ## Nodes and lanes (2026-09-23, media-mcp 0.8.2)
-- **comfy-pro = RTX PRO 6000** (ai-server, reached through a tunnel on spark-01; shares the GPU with the 27B text lane). IMAGE ONLY
+- **comfy-pro = RTX PRO 6000** (the fastest image node; its GPU is shared with a text model). IMAGE ONLY
   (Qwen-Image 2.1 + Krea2 kept loaded): first choice for every `image_submit` preset and `image_edit`; never gets video, music or raw
   graphs. Measured 2026-09-23 (IMG21-PRO6000): Krea 1024² ≈ 5 s; Qwen 2.1 T2I 2K/40 steps ≈ 52 s (cfg 3.5 ≈ 103 s); edit one picture at
   the 2K budget ≈ 85–95 s, three ≈ 190 s, five ≈ 285 s, ten at 1440 ≈ 220 s. Under a busy 27B lane a job can take 2–3× longer.
 - **comfy2 = spark-03**: the preferred H3 node since 0.8.2 (`draft`, `fast`/`daily`/`quality`, director, storyboard): `draft` 5 s ≈ 2 min;
   music models (ACE-Step, Stable Audio 3) live ONLY here. Image fallback: Krea ≈ 20–30 s, Qwen 2.1 1 MP/25 steps ≈ 18 s warm, edit ≈ 42–54 s.
-- **comfy = spark-04**: overflow for H3 and images; the home voice stack shares its memory (an H3 load there leaves ≈ 8 GB), so H3 lands
+- **comfy = spark-04**: overflow for H3 and images; its memory is shared with other always-on services, so H3 lands
   here only when spark-03 is busy. Same image fallback timings as spark-03.
 - ComfyUI runs one queue serially per node: an image queued behind a running H3 job waits for the whole job (+250 s measured).
 - Text/vision lane: one model, `qwen38-flash-next-nvfp4` (spark-01/02, 512K context, multimodal); planner, reviewer, rewriter and
