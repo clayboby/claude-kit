@@ -46,11 +46,15 @@ Output is video WITH generated audio (speech, ambience). `video_status.progress`
 The five local video presets (`draft`, `preset="director_t2v"`, `fast`, `daily`, `quality`) have no `image_url` channel. Check `presets_list.video[preset].image_url_supported` for Comfy presets; use Director `fl2v` with `first_frame` for image-to-video. A reference stored in a request is not proof it conditioned the model.
 `video_submit` lottery: `seeds=[...]` (≤ 8) or `n=k` → one job per seed; reply `{batch, job_ids, jobs, nodes}`. `storyboard_run` and `director_run` take one `seed`, not `seeds` or `n`.
 
-## Image presets and edit presets (0.8.2; `presets_list(brief=true).image_guide` is the live selection guide)
+## Image presets and edit presets (0.8.3; `presets_list(brief=true).image_guide` is the live selection guide)
+**Route first, first match wins:** a real-looking PHOTO that must carry exact words (shop front, product poster, menu board, ad) → `krea-default`
+with `aspect_ratio="2:3"` for the photo WITHOUT text, then `image_edit` (`qi21-edit`) adds the quoted words; typography IS the picture
+(graphic poster, flyer, infographic, UI, menu design) → `qi21-text`; combining / keeping / changing existing pictures → `image_edit`; no exact
+text → `krea-*`. **Posters and covers are portrait 2:3** (Krea: `aspect_ratio="2:3"` = 832×1248, or `width=1024, height=1536`).
 | preset | model | PRO 6000 default (GB10 fallback) | use |
 |---|---|---|---|
-| `krea-default` / `krea-169` | Krea2 Turbo 8 steps | 1024² / 1344×768 (7:4), ≈5 s (20–30 s) | the FAST default: photoreal / aesthetic from scratch; cannot spell |
-| `qi21-text` | Qwen-Image 2.1 | 1696×2528 (2:3), 40 steps ≈ 1 min (832×1248, 25 steps) | exact Chinese / English words, posters, menus, infographics, UI |
+| `krea-default` / `krea-169` | Krea2 Turbo 8 steps | 1024² / 1344×768 (7:4), ≈5 s (20–30 s) | the FAST default: photoreal / aesthetic from scratch, and the photo step of a photo poster; cannot spell |
+| `qi21-text` | Qwen-Image 2.1 | 1696×2528 (2:3), 40 steps ≈ 1 min (832×1248, 25 steps) | typography-first designs with exact Chinese / English words: graphic posters, flyers, infographics, UI, menus |
 | `qi21-scene` | Qwen-Image 2.1, cfg 3.5 + negative | 2528×1696 (3:2) ≈ 1.7 min (1248×832) | crowds, cities, panoramas, many subjects |
 | `qi21-rgba` | Qwen-Image 2.1 | 2048², RGBA sentence added, no rewrite | transparent PNG: sticker, logo, cut-out product |
 | `qi21-t2i` | Qwen-Image 2.1 | 2048² ≈ 52 s (1024², 25 steps ≈ 18 s) | long structured prompts; "use Qwen" |
@@ -91,6 +95,8 @@ continuity `fl2v` (default) | `guide` (experimental) | `cut`; ≈ 5 min per 5 s 
 Every completed job is copied to MinIO and indexed (prompt, seed, preset, node, review score, tags). Stable URL
 `https://media-mcp.zhenbs.com:10000/assets/<asset_id>`; presigned links last 24 h. Drafts expire after 7 days unless starred / in a collection.
 Historical scores, tags and accepted runs identify candidates, not proof that a new brief's hard constraints are met. Claim a constraint is demonstrated only when the cited original media is inspectable and has been checked against that same requirement; record what remains unverified. Sampled frames cannot certify complete action timing or audio. Choose sound from the current brief: a closed list of allowed sounds excludes added room tone, while no dialogue, no music and complete silence are different requests.
+Waiting: `job_wait(job_id, timeout_s=55)` — always the full 55 s; every call re-sends the whole conversation (a three-picture edit waited on 8 times
+cost 1.2 M input tokens on 2026-09-23).
 Job states: `queued_local` → `queued` → `running` → `completed` | `failed` | `lost`; `submission_unknown`, `cancel_pending`,
 `cancel_unconfirmed` need a PERSON (`job_recover`, admin) and keep their node slot meanwhile.
 **Stopping work (0.8.1).** `job_cancel(job_id)` stops a job YOUR token submitted — use it the moment the user says "stop"/"取消"

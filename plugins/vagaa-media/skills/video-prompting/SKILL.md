@@ -1,9 +1,9 @@
 ---
 name: video-prompting
 description: Load BEFORE writing, rewriting or diagnosing a MiniMax-H3 video prompt: spoken dialogue, on-screen text, camera moves, style words, reference-aware wording, seed A/B, why a clip came out wrong. 中文触发：提示词、怎么写、画面文字、店名要出现在画面里、台词、对白、运镜、换个 seed、为什么不像、优化一下描述。Uses prompt_rewrite for T2V drafts and explains what the local grammar accepts.
-verified_against: media-mcp 0.8.2 (2026-09-23)
+verified_against: media-mcp 0.8.3 (2026-09-23)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 4c1f5d313ea1790512d55c0711fc5b37d46451ed4a23f595cc71f7e859efd3f2
+shared_facts_sha256: bec2c1efe329206db6eebe859bd3d18b549e7b50e8b7a57ee2d724d3a9890675
 when_to_use: 要写或改视频提示词、要画面里出现文字、要台词、要解释为什么生成得不对时加载。
 ---
 
