@@ -11,7 +11,7 @@ OS keychain (or `~/.claude/.credentials.json`) rather than in a settings file yo
 
 | | |
 |---|---|
-| Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks and hyphen-preserving MCP tool names; minimum supported version not established) |
+| Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks and hyphen-preserving MCP tool names; minimum supported version not established). Install, configure and a live call re-checked with **2.1.280** against a per-client gateway key (2026-09-24) |
 | Verified against | **Nólë v1.10.2+dgx.20260828.24** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hook is a bash script |
 | Runtime dependencies | `bash`, `curl`, `python3` (no packages) |
@@ -24,7 +24,7 @@ OS keychain (or `~/.claude/.credentials.json`) rather than in a settings file yo
 | `profile` | Address | `nole_credential` holds |
 |---|---|---|
 | `lan` | The router itself, on your network | the router's **own service token** |
-| `public` | The gateway in front of it | the **gateway's API key** |
+| `public` | The gateway in front of it | the **gateway API key issued to this client** |
 
 They are different secrets and they are **not interchangeable**: the gateway strips its own key and
 substitutes an internal token before talking to the router, so sending the service token to the
@@ -32,6 +32,10 @@ public address does not authenticate, and neither does the reverse. `profile` is
 default, so the choice is always explicit; it only picks the wording of the session-start check and
 never rewrites the URL. When the credential is refused, the check says so and repeats which of the
 two the configured profile expects.
+
+The gateway issues **one key per client** and names the client in its access log, so a key can be
+rotated or revoked without touching anyone else. Ask the gateway operator for a key of your own
+rather than reusing another client's.
 
 ## What you get
 
@@ -49,7 +53,12 @@ two the configured profile expects.
 /plugin install vagaa-web-evidence@claude-kit
 ```
 
-`/plugin install vagaa-dgx@claude-kit` installs this plugin together with `vagaa-media`.
+The install opens the options dialog (↑/↓ between rows, type or paste into the highlighted row,
+then **Save configuration**). If you cancel it, or install through the `vagaa-dgx` bundle — which
+installs this plugin together with `vagaa-media` but does **not** prompt for either plugin's options —
+set them later with `/plugin` → **Installed** → *Vagaa Web Evidence* → **Configure options**, then
+`/reload-plugins`. The `/plugin` → **Errors** row `Plugin option "nole_mcp_url" isn't set` is not
+the way in: pressing Enter there uninstalls the plugin.
 
 ## Configuration
 

@@ -21,7 +21,7 @@ PROFILE="${CLAUDE_PLUGIN_OPTION_PROFILE:-}"
 say() { printf '[vagaa-web-evidence] %s\n' "$1"; }
 
 if [ -z "$URL" ]; then
-  say "${LABEL}: not configured — run /plugin, open vagaa-web-evidence and fill in its options."
+  say "${LABEL}: not configured, so its tools are absent this session — tell the user once: /plugin → Installed → vagaa-web-evidence → Configure options, then /reload-plugins."
   exit 0
 fi
 case "$URL" in

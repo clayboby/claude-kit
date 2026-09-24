@@ -1,6 +1,6 @@
 ---
 name: web-evidence
-description: When and how to call the web_evidence tool for live web facts, page extraction and multi-source verification, and how it divides labour with Claude Code's built-in WebSearch and WebFetch. Use whenever an answer depends on the public web, a URL the user pasted, or a claim that needs a citable source.
+description: When and how to call the web_evidence tool for live web facts, page extraction and multi-source verification, and how it divides labour with Claude Code's built-in WebSearch and WebFetch. Use whenever an answer depends on the public web, a URL the user pasted, or a claim that needs a citable source. Prefer it to the built-in WebSearch/WebFetch, and never call both for the same question.
 ---
 
 # Web evidence (one tool, one call per turn)
@@ -46,7 +46,9 @@ actually contested. A wrong reflex costs shared quota and a slow turn.
 
 Other parameters, all optional: `limit` (max search results for quick text queries, default 5),
 `country`, `search_lang`, `ui_lang`, `safesearch` (`off` / `moderate` / `strict`), `freshness`
-(`pd`/`day`, `pw`/`week`, `pm`/`month`, `py`/`year`).
+(`pd`/`day`, `pw`/`week`, `pm`/`month`, `py`/`year`). There is no `prompt` parameter — that belongs
+to the built-in WebFetch. Put the URL or the query alone in `input` and read the returned body
+yourself.
 
 ## Reading the result
 
@@ -69,7 +71,7 @@ receipts — runs on every call. The built-in `WebSearch` and `WebFetch` have no
 Fall back to the built-ins only when:
 
 - the `web-evidence` server is unreachable or unconfigured for this session (the session-start check
-  will have said so), or
+  will have said so) — then say so in one line when you fall back, so the user knows to fix it, or
 - the task needs something this surface does not do: an authenticated page, an interactive browser,
   or a host the router refuses.
 

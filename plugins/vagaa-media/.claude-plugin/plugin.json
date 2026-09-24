@@ -23,7 +23,7 @@
     "media_mcp_url": {
       "type": "string",
       "title": "Media gateway MCP URL",
-      "description": "Streamable-HTTP MCP endpoint of your media gateway. Example: https://media.example.com/mcp (standard surface) or https://media.example.com/mcp-compact (compact surface). Also the origin the asset-link hook trusts.",
+      "description": "Streamable-HTTP MCP endpoint of your media gateway. Example: https://media.example.com/mcp (standard surface). Use a /mcp-compact URL only if your gateway actually serves a compact surface, and then set surface=compact. Also the origin the asset-link hook trusts.",
       "required": true
     },
     "media_mcp_token": {

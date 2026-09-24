@@ -9,8 +9,16 @@ through the `dependencies` field of its manifest.
 /plugin install vagaa-dgx@claude-kit
 ```
 
-Claude Code then prompts for each dependency's own options. Install just one of the two instead if
-you only want that half; a plugin required by an enabled dependent stays enabled.
+**The bundle install does not prompt for the two plugins' options** (checked with Claude Code
+2.1.280): both arrive enabled but unconfigured, and their MCP servers do not start. Configure each
+once: `/plugin` → **Installed** → *Vagaa Media* → **Configure options**, then the same for *Vagaa Web
+Evidence*, then `/reload-plugins`. Until then `/mcp` reports "No MCP servers configured" and
+`/plugin` → **Errors** lists `Plugin option "…" isn't set`; do not press Enter on that Errors row,
+because its "resolve" action uninstalls the plugin rather than opening its options.
+
+Installing either plugin on its own (`/plugin install vagaa-media@claude-kit`) does open its options
+dialog. Install just one of the two instead if you only want that half; a plugin required by an
+enabled dependent stays enabled.
 
 ## Compatibility matrix
 

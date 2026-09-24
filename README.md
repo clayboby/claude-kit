@@ -11,6 +11,14 @@ Inside Claude Code (any project):
 /plugin install vagaa-media@claude-kit
 ```
 
+Installing one plugin on its own opens its options dialog straight away: ↑/↓ moves between rows,
+type or paste into the highlighted row, then choose **Save configuration**. **The `vagaa-dgx` bundle
+does not**: it installs both plugins *unconfigured* and says nothing about it (checked with Claude
+Code 2.1.280). After a bundle install, run `/plugin` → **Installed** → the plugin → **Configure
+options** once for each of the two. Until then `/mcp` reports "No MCP servers configured" and
+`/plugin` → **Errors** lists `Plugin option "…" isn't set`. Do not press Enter on that Errors row:
+its "resolve" action uninstalls the plugin instead of opening its options.
+
 Or from a terminal, non-interactive (fills the options in one go; sensitive values use the OS keychain where supported, with a credentials-file fallback):
 
 ```bash
@@ -21,6 +29,10 @@ claude plugin install vagaa-media@claude-kit \
   --config surface=standard
 claude plugin list          # shows version + enabled
 ```
+
+`--config` puts the value on the command line, where shell history and the process list can see
+it. For the token, prefer leaving that line out and pasting the value into **Configure options**
+instead.
 
 Then start Claude Code and check: `/mcp` lists `media` as connected, and asking "list the media tools you have" returns
 video / image / music / tts / storyboard / director tools. The session-start hook reports connection or configuration problems and stays silent when its probes pass.
@@ -49,15 +61,16 @@ rather than in any settings file you might commit.
 
 | | |
 |---|---|
-| Verified with Claude Code | **2.1.212** (real plugin loading and production MCP calls; minimum supported version not established) |
+| Verified with Claude Code | **2.1.212** (real plugin loading and production MCP calls; minimum supported version not established). Install and configure flow re-checked from a clean config directory with **2.1.280** (2026-09-24) |
 | Verified against | **media-mcp 0.7.20** (`vagaa-media` 0.3.24: Director rejects unknown/incompatible reference inputs; storyboard resume accepts run ID alone; director character references use ref2va while the older storyboard renderer's ref2v remains disabled; delivery, review and audio capability guidance clarified), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3`; no packages, no network access beyond your own gateways |
 
 ## Configuration
 
-Claude Code prompts for these when the plugin is enabled; `/plugin` → the plugin → **Options** edits
-them later. Every value stays on your machine.
+Claude Code prompts for these when a plugin is installed on its own (not through the `vagaa-dgx`
+bundle, see above); `/plugin` → **Installed** → the plugin → **Configure options** sets or edits them
+later. Every value stays on your machine.
 
 ### vagaa-media
 
@@ -72,7 +85,7 @@ them later. Every value stays on your machine.
 | Key | Required | Example | What it is |
 |---|---|---|---|
 | `nole_mcp_url` | yes | `https://search.example.com/mcp-compact` | Streamable-HTTP MCP endpoint. `/mcp-compact` gives one tool; `/mcp` gives six |
-| `nole_credential` | yes, sensitive | — | 直连填服务令牌,公网填网关密钥,不可互换 — with `profile=lan` the router's own service token, with `profile=public` the gateway's API key. Different secrets; neither works at the other address |
+| `nole_credential` | yes, sensitive | — | 直连填服务令牌,公网填网关密钥,不可互换 — with `profile=lan` the router's own service token, with `profile=public` the gateway API key issued to this client (one key per client, so each can be revoked on its own). Different secrets; neither works at the other address |
 | `profile` | yes | `public` | `lan` or `public`. Picks the wording of the session-start check and nothing else |
 
 Each URL becomes its MCP server's `url`, and each credential becomes that server's
