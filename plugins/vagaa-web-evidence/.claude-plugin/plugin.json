@@ -1,7 +1,7 @@
 {
   "name": "vagaa-web-evidence",
   "displayName": "Vagaa Web Evidence",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Free-first public-web search and page extraction through your own evidence router: one call per turn, citations only from extracted bodies, no paid provider without asking.",
   "author": {
     "name": "clayboby",
