@@ -90,9 +90,12 @@ official PE-I2I rewriter on the pictures first (+15–60 s; no gain on four clea
 Six or more people in one picture: identities may mix (2026-09-23, IMG21-GB10). Cloud image presets (unkeyed): `qwen-image-pro`,
 `seedream-pro`, `flux2-pro`. Raw graphs: `workflow_submit` (ask for a template first; they run on the GB10 nodes only).
 
-## Music / SFX presets (comfy2 only)
+## Music / SFX / song presets (comfy2 only)
 `bgm-draft` (ACE-Step 1.5 turbo, 30 s, MP3, lottery here), `bgm-final` (60–300 s FLAC, same prompt+seed+bpm+key, never lottery),
 `sfx` (Stable Audio 3 small-sfx, accepts 1–60 s FLAC; 2–8 s is a typical short cue, no lyrics/bpm/key). BGM accepts 1–600 s. Check the live preset and schema for the requested length. Cloud: `fun-music` (unkeyed).
+MUSIC2 (2026-09-26): `song` (YuE2-3B, vocals, lyrics required, int8 default / bf16, cot full|melody|off, 240 s cap, ≈1× realtime on the GB10) and
+`cover` (source ≤ 240 s via `asset_upload` / a music job / URL → SheetSage2 melody → re-sung in the new style; no voice cloning). Both are
+loudness-normalised to −14 LUFS / −1 dBTP on fetch (asset `params.loudness`, `params.abc`). `music_submit(mode="song"|"cover")` picks them; `asset_upload` needs scope `assets.upload` (in the 音频 token category).
 H3 clips come out quiet (≈ −34 dB measured by a reference setup); level normalisation is not exposed as a tool yet.
 
 ## TTS voices (`presets_list` → `tts_voices`)
