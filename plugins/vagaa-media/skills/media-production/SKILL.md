@@ -1,9 +1,9 @@
 ---
 name: media-production
 description: MUST load FIRST for any request to make, find, review or deliver media through the media gateway: images, video clips, speech/narration, translation, finding earlier work, reviewing a clip, draft→final. 中文触发：帮我做个视频、画张图、整张图、念出来、配音、翻译、找之前做的、审一下、哪里不行、出正式版、再来一张、换个风格、用 sora/可灵/runway 生成。Covers image_submit, video_submit (draft → video_review → same-seed final), tts, translate, assets_search, video_review, job polling and delivery, and the behaviour rules for unsupported models, vague briefs and long jobs.
-verified_against: media-mcp 0.8.7 (2026-09-26)
+verified_against: media-mcp 0.8.10 (2026-09-28)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 6a7f507ceb7ff0ce13700c64aead5cb82f10ad6383b6190d6cdae3c5ac2b4a32
+shared_facts_sha256: 14329d6f8c385edac3ea1a24841f5e4345f1563ade3b4964de3dd722ec975396
 when_to_use: 用户一提到出图、出片、配音、翻译、找作品、审片，先加载本 skill 再调任何 media 工具；用户点名不存在的模型（sora、runway、可灵、veo）时也先加载。
 ---
 ## 0. Behaviour rules (2026-09-14, from the pty trial)
@@ -36,7 +36,7 @@ Use the exact qualified tool names and input schemas exposed in this session; ne
 
 ## 2. The loop: draft → review → final
 1. **Draft cheaply.** `video_submit(prompt, preset="draft", seconds=5, seed=<fixed>)` or a lottery `seeds=[11, 12, 13, 14]` (≤ 8, one job per
-   seed, spread over both nodes). Poll `video_status(job_id)` every 20–30 s; `progress` stays null on the ComfyUI lane — that is not "stuck".
+   seed; the PRO 6000 takes the first two, spark-03 the rest). Poll `video_status(job_id)` every 20–30 s; `progress` stays null on the ComfyUI lane — that is not "stuck".
    **Never end your turn while a job you submitted is still queued/running** — in a non-interactive run (`claude -p`, a hook, a script) there is
    no next turn: keep calling `video_status` (sleep 20–30 s between calls) until it is `completed` / `failed` / `lost`, then fetch and review.
    Prompt text: write it yourself (see `video-prompting`) or pass `prompt_id` from `prompt_rewrite`; `rewrite="auto"` on `draft` runs the

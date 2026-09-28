@@ -1,18 +1,18 @@
 ---
 name: music-and-sfx
 description: Load for background music, BGM, soundtrack, jingle, beat/rhythm track, sound effects or ambience for a video, and for a SONG with vocals or a COVER of an existing song (YuE2). 中文触发：配乐、背景音乐、BGM、音效、环境音、卡点音乐、来段音乐、vlog 开头那种、写首歌、唱出来、翻唱、换个风格唱、用这首歌的旋律。Plans music and SFX separately (music_submit presets bgm-draft/bgm-final/sfx; mode song/cover + asset_upload for songs), explains mixing limits. NOT for narration or spoken lines — that is tts in media-production.
-verified_against: media-mcp 0.8.7 (2026-09-26)
+verified_against: media-mcp 0.8.10 (2026-09-28)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 6a7f507ceb7ff0ce13700c64aead5cb82f10ad6383b6190d6cdae3c5ac2b4a32
+shared_facts_sha256: 14329d6f8c385edac3ea1a24841f5e4345f1563ade3b4964de3dd722ec975396
 when_to_use: 用户要音乐、音效、氛围声时加载；要人声旁白/台词时不加载本 skill。
 ---
 
 # Music, songs and sound effects (YuE2 + ACE-Step + Stable Audio 3 on comfy2)
 
-## 0. Which engine (decide first)
-- A **song someone sings** (lyrics, a vocal, a whole track) → YuE2: `music_submit(mode="song")` (§5). Re-singing an **existing song** in a new style → `mode="cover"` (§5).
-- **BGM / cue / loop / jingle under a video** (no vocal needed) → ACE-Step `bgm-draft` → `bgm-final` (§1). A **sound / ambience** → Stable Audio 3 `sfx` (§2).
-- Never point YuE2 at BGM (3–5× slower, no bpm/key/loop control) and never ask ACE for a vocal song or a cover (MUSIC1 eval: YuE2 6.73 vs ACE 6.01 on WildSongBench; cover mAP 0.647 vs 0.024).
+## 0. Which engine (decide first — a fixed rule, not a taste call)
+- **Anything sung** — a song, lyrics, a vocal, a melody to write and sing (写歌 / 作曲 / 唱) → YuE2: `music_submit(mode="song")` (§5). Re-singing an **existing song** in a new style (翻唱) → `mode="cover"` (§5). Owner's ruling 2026-09-28: every song goes to YuE2; ACE never makes a song.
+- **BGM / 配乐 / cue / loop / jingle under a video** — instrumental, no vocals, simple melody → ACE-Step `bgm-draft` → `bgm-final` (§1). A **sound / ambience (音效)** → Stable Audio 3 `sfx` (§2).
+- Never point YuE2 at BGM (3–5× slower, no bpm/key/loop control). ACE refuses anything sung since media-mcp 0.8.10: `lyrics`, `instrumental=false` or a prompt with singing words (vocal, singer, 人声, 男声 / 女声, 唱…) → `invalid_argument` whose detail is the `mode="song"` / `mode="cover"` call to make instead (MUSIC1 eval: YuE2 6.73 vs ACE 6.01 on WildSongBench; cover mAP 0.647 vs 0.024).
 
 Facts (limits, node, timings): `../_shared/cluster-facts.md`. Spoken narration (`tts`) and translation belong to `media-production`;
 assembling a whole film (per-shot clips, seams) belongs to `storyboard-longform`.
@@ -23,7 +23,7 @@ Use the current brief's sound requirements: a closed list of permitted sounds ex
 `music_submit(prompt=<style / instrument / mood tags>, preset="bgm-draft", seconds=30, seed=<fixed>, bpm=<int>, key="A minor")` → poll
 `music_status(job_id)` → `music_fetch(job_id)` (MP3). Draft is 30 s and cheap (ACE-Step 1.5 turbo, 8 steps): run a lottery (`seeds=[...]`, ≤ 8), pick
 by ear / rubric, then re-submit the **same prompt + seed + bpm + key** on `preset="bgm-final"` with the real length (60–300 s, FLAC). Never lottery on
-`bgm-final`. Lyrics: omit `lyrics` (or `instrumental=true`) for instrumental cues; otherwise pass `[Verse]` / `[Chorus]`-tagged lyrics.
+`bgm-final`. ACE is instrumental only: no `lyrics`, no `instrumental=false`, no singing words in the tags ("instrumental, no vocals" is fine) — words to be sung mean a song (§5).
 
 ## 2. SFX
 `music_submit(prompt=<describe the sound, not music>, preset="sfx", seconds=4, seed=<fixed>)` → FLAC (Stable Audio 3 small-sfx; no lyrics / bpm /
