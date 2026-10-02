@@ -1,9 +1,9 @@
 ---
 name: media-production
 description: MUST load FIRST for any request to make, find, review or deliver media through the media gateway: images, video clips, speech/narration, translation, finding earlier work, reviewing a clip, draft→final. 中文触发：帮我做个视频、画张图、整张图、念出来、配音、翻译、找之前做的、审一下、哪里不行、出正式版、再来一张、换个风格、用 sora/可灵/runway 生成。Covers image_submit, video_submit (draft → video_review → same-seed final), tts, translate, assets_search, video_review, job polling and delivery, and the behaviour rules for unsupported models, vague briefs and long jobs.
-verified_against: media-mcp 0.8.10 (2026-09-28)
+verified_against: media-mcp 0.8.11 (2026-09-30)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 14329d6f8c385edac3ea1a24841f5e4345f1563ade3b4964de3dd722ec975396
+shared_facts_sha256: 127795d33dd2c0c7a765660895fbf77d0555075e8598e7ae729d2610b4823d08
 when_to_use: 用户一提到出图、出片、配音、翻译、找作品、审片，先加载本 skill 再调任何 media 工具；用户点名不存在的模型（sora、runway、可灵、veo）时也先加载。
 ---
 ## 0. Behaviour rules (2026-09-14, from the pty trial)

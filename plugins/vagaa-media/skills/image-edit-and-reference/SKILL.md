@@ -1,9 +1,9 @@
 ---
 name: image-edit-and-reference
 description: Load when the user wants to CHANGE an existing image or video rather than make a new one, or keep something consistent: edit/retouch an image, change clothes or background, swap a person, transfer motion from a video, animate a still, use a reference image, keep a character or product identical across shots. 中文触发：改图、修图、换装、换背景、换人、换脸、动作迁移、让这张图动起来、参考图、保持一致、同一个人。Tells which routes exist today (Director fl2v/ref2v/v2v, reverse_prompt, raw workflow) and which have NO tool yet, so you can say so honestly.
-verified_against: media-mcp 0.8.10 (2026-09-28)
+verified_against: media-mcp 0.8.11 (2026-09-30)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 14329d6f8c385edac3ea1a24841f5e4345f1563ade3b4964de3dd722ec975396
+shared_facts_sha256: 127795d33dd2c0c7a765660895fbf77d0555075e8598e7ae729d2610b4823d08
 when_to_use: 用户拿着已有的图/视频要改、要保持一致、要参考时加载；只是从零画一张新图用 media-production。
 ---
 
@@ -24,7 +24,7 @@ Read this section first: it is the honest capability table. Facts (presets, node
 | video-to-video using an existing clip | yes, director | A single `director_run` v2v segment with `source_video`; this is not a dedicated motion-transfer / subject-swap API |
 | replace the person in a video with a reference character, scene kept | **yes — `character_swap`** (0.7.28, SCAIL-2) | `character_swap(driver_video, reference_image, prompt, mode="replace", driver_object="person", ref_object="person")`: SAM 3.1 text picks the person on both sides; the prompt describes the OUTPUT (appearance, held objects, scene); long videos are chained in 81-frame segments. Returns chain_id → `job_wait` (pass the chain id as `job_id`) or `character_status(chain_id)` → final job_id + asset. `mode="animate"` = reference character performs the motion, scene from the prompt. Only the node holding SCAIL-2 runs it (~4 min per 65–81-frame segment). |
 | reference character performs a driving video's motion, prompt-controlled background/camera | **yes — `motion_animate`** (0.7.28, Wan-Animate-2) | `motion_animate(driver_video, reference_image, prompt, pose_prompt)`: no mask; framing of reference and driver must match (full body ↔ full body, the #1 failure cause); long videos chained with continue_motion (experimental). ~6 min per 81 frames. |
-| upload a local user file | **no dedicated tool** | A gateway asset or allowlisted URL is required. Report this input gap; do not claim a filesystem path or data URI was accepted |
+| use the person's OWN photo (a file they hand over) | **yes — `asset_upload`** (0.8.11) | `asset_upload(data_base64=<the file>, filename=..)` — png / jpeg / webp ≤ 20 MiB, ≤ 50 MP; stored re-encoded (phone rotation applied, GPS / camera metadata dropped, long edge ≤ 4096), private to your token, expires in 7 days unless starred or a director run uses it → `as-…` for `image_edit(images=[…])` (one upload per picture, up to 10) or `director_run` `first_frame`. A filesystem path or data URI is not an input: upload the bytes |
 
 `krea-169` is 1928×1088 (16:9, 2 MP) on the PRO 6000 but 1344×768 (7:4) on a GB10 fallback. `aspect_ratio="16:9"` gives ≈16:9 at each node's budget (1920×1088 / 1376×768); for an EXACT 16:9 on every node pass `width=1024, height=576` to `image_submit` and verify the original file's dimensions; wording the ratio in a prompt is not a size control.
 

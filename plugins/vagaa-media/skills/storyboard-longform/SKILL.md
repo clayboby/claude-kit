@@ -1,9 +1,9 @@
 ---
 name: storyboard-longform
 description: Load for anything longer than one clip or with more than one shot: short film, ad, promo, MV, short drama, story adaptation, script to video. 中文触发：分镜、镜头表、短片、宣传片、广告片、MV、短剧、剧本、列分镜、第 N 镜改一下、开拍、继续拍、接着上次。Turns a brief into a shot list (storyboard_plan), edits shots (storyboard_plan_update), keeps characters consistent, runs/resumes/assembles (storyboard_run / director_run), and how to report a long run to the user.
-verified_against: media-mcp 0.8.10 (2026-09-28)
+verified_against: media-mcp 0.8.11 (2026-09-30)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 14329d6f8c385edac3ea1a24841f5e4345f1563ade3b4964de3dd722ec975396
+shared_facts_sha256: 127795d33dd2c0c7a765660895fbf77d0555075e8598e7ae729d2610b4823d08
 when_to_use: 用户要多镜头、要分镜、要改某一镜、要开拍/续拍时加载；单镜 10 秒以内的小片用 media-production。
 ---
 Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).

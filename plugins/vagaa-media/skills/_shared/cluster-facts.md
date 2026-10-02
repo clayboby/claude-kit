@@ -1,8 +1,8 @@
 # Cluster facts (single source for the five media skills)
 
-Referenced by every `SKILL.md` under `.claude/skills/*` as `../_shared/cluster-facts.md`; its sha256 is stamped in each
-skill's front matter (`shared_facts_sha256`) and checked by `media-mcp/tools/skill_check.py` — edit HERE, then run
-`media-mcp/tools/skills_build.py --write`. Timings are measurements with a date; when they drift by more than 25 %,
+Referenced by every `SKILL.md` under `skills/*` as `../_shared/cluster-facts.md`; its sha256 is stamped in each
+skill's front matter (`shared_facts_sha256`) and checked by `tools/skill_check.py` — edit HERE, then run
+`tools/skills_build.py --write`. Timings are measurements with a date; when they drift by more than 25 %,
 update the measurement with evidence. API/preset contracts aligned with media-mcp 0.8.2 (2026-09-23; image section); deployment verification is recorded in the release ledger. Earlier timings below are historical samples, not latency guarantees.
 
 ## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries)

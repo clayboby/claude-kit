@@ -10,6 +10,7 @@ Contracts aligned with media-mcp 0.7.21 on 2026-09-13; deployment verification i
 | Director mode compatibility | First/last frames require fl2v; reference images/audio require r2v; source video requires v2v. `ref_videos` is unsupported and is rejected. Unknown fields are rejected before media I/O |
 | `storyboard_plan_update` → `storyboard_direct` | Store a character image reference in `ref_image_url`; asset IDs are supported and avoid URL expiry. Voice references belong to `director_run`'s character/segment inputs; do not invent `ref_audio_url` on a storyboard character |
 | `director_pack_import` | `pack_asset` for a stored pack asset, or `pack_url` on an allowlisted host |
+| The person's own file (`asset_upload`, scope `assets.upload`) | `data_base64` (or an allowlisted `url`) → an `as-…` id private to the uploading token, 7-day draft (kept once a cover or a director run reads it). 0.8.11: a picture (png / jpeg / webp ≤ 20 MiB, re-encoded without metadata) feeds `image_edit.images` and Director frames; audio (mp3 / wav / m4a / flac ≤ 30 MiB, 240 s) feeds a `music_submit` cover. `presets_list().asset_upload.kinds` says which kinds this server takes |
 | Browser delivery | A fetch's `url`, or `asset_get(asset_id, presign=true)` → `presigned_url`. Temporary, opens without a Bearer; preserve the complete query and percent encoding |
 | Stable records | `asset_id`, `job_id`, `asset_url`. The stable URL needs Bearer/LAN authorization; an anonymous 404 does not prove the asset is gone |
 
