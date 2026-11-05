@@ -1,9 +1,9 @@
 ---
 name: video-prompting
 description: Load BEFORE writing, rewriting or diagnosing a MiniMax-H3 video prompt: spoken dialogue, on-screen text, camera moves, style words, reference-aware wording, seed A/B, why a clip came out wrong. 中文触发：提示词、怎么写、画面文字、店名要出现在画面里、台词、对白、运镜、换个 seed、为什么不像、优化一下描述。Uses prompt_rewrite for T2V drafts and explains what the local grammar accepts.
-verified_against: media-mcp 0.8.11 (2026-09-30)
+verified_against: media-mcp 0.9.20 (2026-11-05)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 127795d33dd2c0c7a765660895fbf77d0555075e8598e7ae729d2610b4823d08
+shared_facts_sha256: d282274761849abcb52758a63eb81bde5dc93d22aa9a2d0581f2e4ec636ffcf0
 when_to_use: 要写或改视频提示词、要画面里出现文字、要台词、要解释为什么生成得不对时加载。
 ---
 
@@ -34,6 +34,8 @@ non_diegetic_music: <1-3 sentences: instruments, tempo, dynamics; or N/A>
 - The gateway `prompt_rewrite` profile covers Chinese/English dialogue and rejects other scripts with `unsupported_language`; this is not a statement that direct H3 generation supports only those languages.
 
 ## 2. Rewrite instead of guessing: `prompt_rewrite`
+`video_submit(sound=, score=)` and `prompt_rewrite(sound=, score=)` are judged by the same function: the same choice gives the same text. Reuse a `prompt_id` only with the choice it was written under, otherwise the submit is refused as a prompt binding mismatch.
+
 ```
 prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset": "draft"}, mode="t2v", seconds=5,
                language_policy={"description_language": "en"}, protected_content={"dialogue": [...], "screen_text": [...]},
@@ -65,7 +67,6 @@ prompt_rewrite(text=<brief or prompt>, target={"tool": "video_submit", "preset":
 | the one action written happens only in the last second, nothing follows | only the first beat of a chain was written ("She picks up the cup." → pick-up at t≈4–4.5 s, 2/2 seeds; P line 2026-09-17) | write EVERY beat that must happen, in order — "picks up the cup, then takes a sip, then puts it down": 3/3 on both seeds whether written with "then", as three sentences, with time codes (kept to ±0.5 s) or as a three-segment chain; the writing style made no difference, completeness did |
 | closing beat blows up (grabs or lifts the prop, yanks the lamp, loud thump, toothy grin) | any hand action written into the last continued segment; wording like "gentle", "quiet", "closed-mouth" did not restrain it across three seeds-identical retries (C03 v1–v3, 2026-09-15) | make the closing beat hand-free: posture, breath, eyes, a faint closed-mouth smile; keep props untouched (C03 v4/v5 passed) |
 | black bars left and right (a product / still-life shot rendered as a narrow frame inside the 16:9 canvas) | seed-bound: the same prompt on another seed fills the frame; adding "no black borders / no letterboxing / no pillarboxing" to the prompt changed nothing (C02 purple-jar, seed 9132006 vs 9132016, `reference/c02-styles-20260915`) | keep the prompt, change the seed; do not spend a run on negative wording |
-| a rock or other solid object in surf / spray fades out in place and comes back, two layers seem to overlap (double exposure) | preset-bound, not prompt-bound: `draft` / `fast` (Turbo 8-step) on water-meets-rock subjects ghosted in 2 of 6 measured clips; the same prompt and seed on `daily` or `quality` kept the rock in place, and the same `draft` settings on a city street did not ghost (media-mcp COMFY-P3-GHOST-VERIFY, 2026-10-26, one seed) | no wording fixes it — re-render the same text and seed on `daily` (same time as `fast`, no Turbo) or `quality`; waterfalls / smoke are untested |
 | audio clips at 0 dB / later shots far louder than the first (level wording did not help in two same-seed re-renders — C04 v3 "no louder than the other shots", S9 v2 "exactly the same constant level" came back unchanged; n=2, provisional — finish with `video_audio_level`) | every shot's soundscape stacks several sources (street traffic + tools + voices) and nothing says "quiet"; H3 mixes them at full scale (C04 2026-09-16: shots 4–6 at −0…−6 dB peak, user: "后续配音有问题") | one or two quiet diegetic sources per shot, the loudest named once ("only a soft brush of cloth on leather; distant street, faint"); check `max_volume` with ffmpeg before delivery |
 | sound does not match the brief | soundscape repeats dialogue or adds unrequested layers | requested diegetic sounds in `overall_soundscape`; requested background score in `non_diegetic_music`; keep source music inside the scene description |
 | a causal event never happens across cut-style segments (the bag is knocked in one shot, the next shot pours flour by itself) | each `continuity=false` segment samples its own action; wording did not fix it in two versions (held-out Flour Crown 2026-09-17, director and storyboard) | keep the event inside ONE segment, and when it must connect to other shots stage it as a keyframe chain: first frame = state before, last frame = `image_edit` of the SAME image changing only the result, the event in one `fl2v` segment. L2 line 2026-09-17 (knock a mug / hand over keys / switch a light on, 2 seeds each): same-source end frame 6/6 on every criterion; an end frame generated separately 5/6 turned into a hard cut, a dissolve or a costume change; **first frame alone (i2v) 0/6 — the clip returns to its first frame by the end**; plain t2v 6/6 for a single-subject fixed-shot micro-event. Sound events (a hum that stops) are cut in post, not prompted |
