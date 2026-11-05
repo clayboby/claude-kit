@@ -5,11 +5,12 @@ skill's front matter (`shared_facts_sha256`) and checked by `tools/skill_check.p
 `tools/skills_build.py --write`. Timings are measurements with a date; when they drift by more than 25 %,
 update the measurement with evidence. API/preset contracts aligned with media-mcp 0.8.2 (2026-09-23; image section); deployment verification is recorded in the release ledger. Earlier timings below are historical samples, not latency guarantees.
 
-## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries)
+## Tools (media-mcp MCP server; `presets_list` is the live truth for presets, voices, models, cloud entries; it answers the brief by default, `brief=false` is the full contract)
 `video_submit`/`video_status`/`video_fetch`, `image_submit`/`image_status`/`image_fetch`, `music_submit`/`music_status`/`music_fetch`,
 `workflow_submit`/`workflow_status`/`workflow_fetch`, `director_run`/`director_status`/`director_fetch`/`director_accept`/`director_pack_export`/`director_pack_import`/`director_pack_run`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`,
 `prompt_rewrite`/`prompt_get` (0.6.0; image targets 0.8.2), `image_edit` (Qwen-Image 2.1 since 0.8.2), `assets_search`/`asset_get`/`asset_tag`, `storyboard_plan`/`storyboard_plan_get`/
-`storyboard_plan_update`/`storyboard_run`/`storyboard_direct`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `jobs_list`, `job_cancel`, `capabilities`, `job_recover` (admin).
+`storyboard_plan_update`/`storyboard_run`/`storyboard_direct`/`storyboard_status`/`storyboard_fetch`, `presets_list`, `creative_params`, `jobs_list`, `job_cancel`, `capabilities`, `job_recover` (admin).
+`creative_params` (0.9.4, read-only, no scope, same as `presets_list`) is the declaration a client draws its create forms from — per model × tier the parameter rows (ratio, seconds, count, seed …) with their Chinese names, choices and defaults, filtered to the presets this token may use; an agent that only wants to make something does not need it (`presets_list` is the guide), and every value it names is an argument the tool really takes.
 Cloud-only, present only when the matching cloud entry is enabled (none is, 2026-09-06): `voice_enroll`, `compliance_review`/
 `compliance_status`, `lipsync`. Missing tools may reflect cloud configuration, scope, surface or a planning-only restriction; verify the cause before asking for reconnection.
 **Since 0.8.0 `tools/list` only shows what YOUR token may call, so a tool you cannot see is usually "not granted", not "not built"** —
@@ -24,13 +25,14 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
   AIMixer Director node, ref2va, refine / latent-upscale weights, SPAN upscaler, Wan / SCAIL or music: `director_run` / `storyboard_direct` /
   `director_pack_run`, `video_upscale`, `character_swap`, `motion_animate`, music and raw graphs stay on spark-03 (0.8.9 checks the node's own
   listing, so a director run records `nodes_skipped: {comfy-pro: [...]}`). Measured 2026-09-26 (SCHED1): H3 `draft` 5 s ≈ 30–45 s, 10 s ≈ 85 s,
-  `fast` 15 s 1344×768 ≈ 13 min (≈ 22 min while its 27B is saturated). Images: Measured 2026-09-23 (IMG21-PRO6000, IMG-BAKEOFF): Krea 1024² ≈ 4–5 s, 2 MP (1448²) ≈ 9 s; Qwen 2.1 T2I 2K/40 steps/cfg 1 ≈ 55 s (cfg 3.5 ≈ 107 s, no longer used); edit one picture at
+  `fast` 15 s 1344×768 ≈ 13 min (≈ 22 min while its 27B is saturated). Images: Measured 2026-09-23 (IMG21-PRO6000, IMG-BAKEOFF): Krea 1024² ≈ 4–5 s, 2 MP (1448²) ≈ 9 s; Qwen 2.1 T2I 2 MP/25 steps/cfg 1 ≈ 12 s (since 0.9.3 the default; 4 MP/40 steps ≈ 50 s = the `-fine` presets; cfg 3.5 ≈ 107 s, no longer used); edit one picture at
   the 2K budget ≈ 85–95 s, three ≈ 190 s, five ≈ 285 s, ten at 1440 ≈ 220 s. Under a busy 27B lane a job can take 2–3× longer.
-- **comfy2 = spark-03**: the H3 fallback after the PRO 6000 (0.8.9) and the ONLY node for the Director console, `video_upscale`, character
+- **comfy102 (earlier name `comfy2`) = spark-03**: the H3 fallback after the PRO 6000 (0.8.9) and the ONLY node for the Director console, `video_upscale`, character
   chains and music: `draft` 5 s ≈ 2 min, `fast` 15 s ≈ 40 min; music models (ACE-Step, Stable Audio 3, YuE2) live ONLY here. Image fallback: Krea ≈ 20–30 s, Qwen 2.1 1 MP/25 steps ≈ 18 s warm, edit ≈ 42–54 s.
-- **comfy = spark-04**: Krea images only — no video since 2026-09-23 (its memory is shared with the home voice stack) and no Qwen 2.1
-  since 0.8.6 (a resident Qwen3.6-35B lives there; a cold 2.1 load ran it below the watchdog line). Same Krea fallback timing as spark-03;
-  every `qi21-*` preset and `image_edit` fall back to spark-03 only.
+- **comfy = spark-04**: images only — no video since 2026-09-23 (its memory is shared with the home voice stack). Krea stays resident
+  (`resident_family: krea`) and by default it takes Krea only: a `qi21-*` preset or `image_edit` never lands there. When the operator turns the
+  family switch on (`MEDIA_MCP_FAMILY_FREE=1`), every `qi21-*` preset and `image_edit` reach it only as the LAST fallback after the PRO 6000 and spark-03, and
+  such a job runs alone: ComfyUI is freed first, Krea is loaded back afterwards (a cold load each time, so expect it to be slow).
 - ComfyUI runs one queue serially per node: an image queued behind a running H3 job waits for the whole job (+250 s measured). The pool
   therefore keeps flexible jobs off a node holding a LONG job (`fast`/`daily`/`quality`, any clip ≥ 10 s, storyboard / director ≥ 10 s): while
   the PRO 6000 renders a 15 s final, new images and the next video go to spark-03 (images also spark-04). A second SHORT draft stays queued on
@@ -40,10 +42,10 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
   gateway `/v1` and rewrites the prompts of PRO 6000 jobs. `presets_list.models` is the live list.
 - TTS: Qwen3-TTS-12Hz-1.7B on spark-04 `ha-tts-stream2` (vLLM-Omni, shared with the home agent; ≈0.4× real time, long text read in ≤150-character chunks two at a time and joined; `lang` sets the reading language: zh/en/ja/ko/de/fr/ru/pt/es/it); translation: Hy-MT2 on spark-04.
 
-- **Bulk embeddings are gated (0.7.55).** WeMM (spark-03) shares its GPU with `comfy2`; `embed_batch_*` jobs run only while `comfy2` has been idle 30 s and pause within one chunk when film work arrives (an H3 draft ran 2× slower under a WeMM burst, 2026-09-19). One query-time embedding still goes straight through the gateway `/v1/embeddings`.
+- **Bulk embeddings are gated (0.7.55).** WeMM (spark-03) shares its GPU with `comfy102`; `embed_batch_*` jobs run only while `comfy102` has been idle 30 s and pause within one chunk when film work arrives (an H3 draft ran 2× slower under a WeMM burst, 2026-09-19). One query-time embedding goes straight through the gateway `/v1/embeddings` (since 0.9.20 an `assets_search` sentence also checks that gate's verdict first).
 
 ## Video presets (H3 on the ComfyUI lane, 24 fps)
-`video_submit` accepts integer `seconds` from 1 through `presets_list.defaults.max_seconds` (15 in production, 2026-09-13); token limits may be stricter. The [official H3 output range](https://github.com/MiniMax-AI/MiniMax-H3#readme), 4–15 s, is model guidance, not the gateway's minimum accepted duration. Frames snap to 17n+5: 4 s → 107, 5 s → 124, 15 s → 362; inspect the returned duration.
+`video_submit` accepts integer `seconds` from 1 through `presets_list.defaults.effective_max_seconds` (the lower of the instance limit, 15 in production, and the token's own `max_seconds`); the token's `max_seconds` (`capabilities().principal.limits.max_seconds`, absent = none) applies to every tool with a length — `video_submit`, `music_submit`, the TOTAL of `director_run` segments — and a longer explicit value is cut to the limit and made (the reply has `clamped_to`, `requested_seconds` and a `seconds_clamped` warning: say the real length to the person); only a director film that cannot fit even at 1 s per segment is refused (`forbidden: seconds > N`). The [official H3 output range](https://github.com/MiniMax-AI/MiniMax-H3#readme), 4–15 s, is model guidance, not the gateway's minimum accepted duration. Frames snap to 17n+5: 4 s → 107, 5 s → 124, 15 s → 362; inspect the returned duration.
 | preset | size / steps | ≈ time | use |
 |---|---|---|---|
 | `draft` | 832×480, Turbo 8 | 5 s ≈ 30–45 s on the PRO 6000, ≈ 2 min on spark-03 | iterate; the only preset `prompt_rewrite` covers (T2V, 5 s, zh/en dialogue) |
@@ -68,28 +70,35 @@ existing pictures → `image_edit`; many named elements with exact counts / left
 everything else without exact text (photo, portrait, phone snapshot, product, food, anime, concept art, landscape, night, crowds / cities / big
 scenes) → `krea-*` — Krea is the QUALITY default there, not a draft (the 09-23 blind bake-off: Krea won those categories, Qwen won words /
 layouts / many-element prompts, big scenes were 1 : 1 : 1); Krea's words go as written (its own prompt expansion is not a default).
+**Big scenes (10-12, two blind reads, owner agreed):** a PHOTOREAL one (a crowd, a festival, a city, a real-looking battle) stays on Krea; a NON-PHOTOREAL fantasy / concept-art big scene at
+grand scale (an otherworldly landscape, a megastructure, a city on a giant tree) → `qi21-scene` (3:2 wide); a single concept-art subject is still Krea.
 **Posters and covers are portrait 2:3** (Krea: `aspect_ratio="2:3"` = 1184×1760 on the PRO 6000, 832×1248 on a GB10).
 | preset | model | PRO 6000 default (GB10 fallback) | use |
 |---|---|---|---|
 | `krea-default` / `krea-169` | Krea2 Turbo 8 steps | 1448² (2 MP) / 1928×1088 (16:9, 2 MP), ≈9 s (1024² / 1344×768 7:4, 20–30 s) | the quality default without exact text: photoreal, portraits, products, food, anime, concept art, crowds; the photo step of a photo poster; cannot spell |
 | `krea-fast` | Krea2 Turbo 8 steps | 1024² on every node, ≈4 s (20–30 s) | only when the person asks for fast / a draft |
-| `qi21-text` | Qwen-Image 2.1 | 1696×2528 (2:3), 40 steps ≈ 1 min (832×1248, 25 steps) | typography-first designs with exact Chinese / English words: graphic posters, flyers, infographics, UI, menus |
-| `qi21-t2i` | Qwen-Image 2.1 | 2048² ≈ 55 s (1024², 25 steps ≈ 18 s) | many named elements with counts / positions; long structured prompts; "use Qwen" |
-| `qi21-scene` | Qwen-Image 2.1 | 2528×1696 (3:2) ≈ 1 min (1248×832) | a wide frame with many named elements and exact counts / positions; keeps 3:2 whatever ratio the rewrite picks |
-| `qi21-rgba` | Qwen-Image 2.1 | 2048², RGBA sentence added, no rewrite | transparent PNG: sticker, logo, cut-out product |
+| `qi21-text` | Qwen-Image 2.1 | 1152×1728 (2:3, 2 MP), 25 steps ≈ 12 s (832×1248, 25 steps) | typography-first designs with exact Chinese / English words: graphic posters, flyers, infographics, UI, menus |
+| `qi21-t2i` | Qwen-Image 2.1 | 1440² (2 MP), 25 steps ≈ 12 s (1024², 25 steps ≈ 18 s) | many named elements with counts / positions; long structured prompts; "use Qwen" |
+| `qi21-scene` | Qwen-Image 2.1 | 1728×1152 (3:2, 2 MP), 25 steps ≈ 12 s (1248×832) | a wide frame with many named elements and exact counts / positions; keeps 3:2 whatever ratio the rewrite picks |
+| `qi21-rgba` | Qwen-Image 2.1 | 1440² (2 MP), 25 steps ≈ 12 s, RGBA sentence added, no rewrite | transparent PNG: sticker, logo, cut-out product |
 | `qi21-quality` | Qwen-Image 2.1, 40 steps | 2048² on every node (≈ 55 s; ≈ 190 s on GB10) | one hard final on Qwen |
+| `qi21-t2i-fine` / `qi21-text-fine` / `qi21-scene-fine` | Qwen-Image 2.1 · 千问 2.1 · 精细 | 2048² / 1696×2528 / 2528×1696 (4 MP), 40 steps ≈ 50 s (GB10: as the base preset) | the finest detail on Qwen, same routes as the base preset (`qi21-t2i` / `qi21-text` / `qi21-scene`); only when the person asks for the finest quality — the default 2 MP / 25 steps is the normal tier |
 Every qi21 `image_submit` preset runs **cfg 1** (0.8.6): the official path; a `negative_prompt` has no effect at cfg 1 (cfg 3.5 + negative
 doubled the time and was not steadily better, IMG-BAKEOFF §2.3).
 `aspect_ratio="3:2"` sizes the picture to each node's pixel budget; `width`/`height` pin one size on every node (so `width=1024, height=1536`
 is now SMALLER than the PRO 6000's 2 MP default). `krea-169` is 16:9 on the PRO 6000 and 7:4 on a GB10; `aspect_ratio="16:9"` gives ≈16:9 at
 each node's budget (1920×1088 / 1376×768); an EXACT 16:9 everywhere = `width=1024, height=576` (checked 2026-09-13). qi21 output is always a PNG with an alpha channel.
-**Every qi21 `image_submit` preset but `qi21-rgba` rewrites by default** (0.8.6, owner 2026-09-24: 「这个几乎不用不行」) with the official Qwen-Image 2.1
-prompt enhancer (the authors' PE-T2I system prompt, run by the rewriter of the node the job lands on; +15–45 s, median ≈38 s, BEFORE the job
+**Every qi21 `image_submit` preset but `qi21-rgba` rewrites by default** (0.8.6, owner 2026-09-24: 「这个几乎不用不行」; the `-fine` twins too) with the official Qwen-Image 2.1
+prompt enhancer (the authors' PE-T2I system prompt, run by the rewriter of the node the job lands on; since 0.9.3 3–4 s on the PRO 6000's 27B with thinking OFF (`qi21-text` / `qi21-text-fine` think medium there: 11–18 s), BEFORE the job
 id comes back): a long English observer paragraph plus an aspect ratio; quoted words are checked verbatim. `rewrite="off"` per call sends your
 words as written; an English prompt of 120+ words is kept as written; a defaulted rewrite that fails falls back to your words with a warning.
 `qi21-rgba` has NO rewrite (the profile does not cover it; `rewrite="auto"` answers unsupported_target): in the 2026-09-23 A/B the enhancer
 painted a background and a transparent sticker lost its transparency. Another known cost from that A/B: a night scene came out too dark. The reply carries `prompt` (the text sent), `prompt_id` and `per_node` sizes; `image_status` /
 `job_wait` / `image_fetch` carry `sent_prompt` (what the model got), `caller_prompt` (your words), `rewrite_status` and `was_rewritten`.
+**Turbo presets (not the default of anything):** `qi21-turbo` (1:1) and `qi21-turbo-text` (2:3) for `image_submit`, `qi21-turbo-edit` for `image_edit`: the same Qwen-Image 2.1
+distilled to the official 8 steps, on the PRO 6000 and spark-03 only (never spark-04). There is no steps / cfg to set (`image_edit` refuses them). The two text-to-image Turbo presets rewrite by default like `qi21-t2i` (the Turbo profile; PRO 6000: ~5 s a picture + the 3-4 s rewrite), `qi21-turbo-edit` does not (like every edit preset). Use one only when the person names Turbo: `image_submit(model="qi21-turbo")` / `image_edit(model="qi21-turbo")` with the
+preset you would pick by route (the service moves it to the Turbo twin; the reply's `model_remap` says which, and `tier_dropped` when a finer tier became the plain one). A route Turbo
+lacks (transparent PNG) is `invalid_argument`. Nothing routes work there on its own, and the same seed does not give the same picture as the 2.1 presets.
 **`image_edit` presets:** `qi21-edit` (default; Qwen-Image 2.1; 1–10 pictures; PRO 6000 40 steps at a 2K budget, GB10 25 steps at 1 MP),
 `qi21-edit-quality` (cfg 3.5 + negative, twice the time), `qwen-edit-2511` (the old model, 1–3 pictures, fallback only). Reference
 pixels are capped per node — PRO 6000 21 MP (1–5 pictures at 2048, 6 at 1856, 7–8 at 1600, 9–10 at 1440; ten at 2048 ran out of
@@ -98,8 +107,8 @@ official PE-I2I rewriter on the pictures first (+15–60 s; no gain on four clea
 Six or more people in one picture: identities may mix (2026-09-23, IMG21-GB10). Cloud image presets (unkeyed): `qwen-image-pro`,
 `seedream-pro`, `flux2-pro`. Raw graphs: `workflow_submit` (ask for a template first; they run on the GB10 nodes only).
 
-## Music / SFX / song presets (comfy2 only)
-`bgm-draft` (ACE-Step 1.5 turbo, 30 s, MP3, lottery here), `bgm-final` (60–300 s FLAC, same prompt+seed+bpm+key, never lottery) — instrumental BGM only: lyrics / instrumental=false / singing words are refused since 0.8.10 (songs are `song` / `cover`),
+## Music / SFX / song presets (comfy102 only)
+`bgm-draft` (ACE-Step 1.5 XL-turbo on comfy102 only, 30 s, MP3, lottery here), `bgm-final` (60–300 s FLAC, same prompt+seed+bpm+key, never lottery) — instrumental BGM only: lyrics / instrumental=false / singing words are refused since 0.8.10 (songs are `song` / `cover`),
 `sfx` (Stable Audio 3 small-sfx, accepts 1–60 s FLAC; 2–8 s is a typical short cue, no lyrics/bpm/key). BGM accepts 1–600 s. Check the live preset and schema for the requested length. Cloud: `fun-music` (unkeyed).
 MUSIC2 (2026-09-26): `song` (YuE2-3B, vocals, lyrics required, int8 default / bf16, cot full|melody|off, 240 s cap, ≈1× realtime on the GB10) and
 `cover` (source ≤ 240 s via `asset_upload` / a music job / URL → SheetSage2 melody → re-sung in the new style; no voice cloning). Both are
@@ -114,24 +123,28 @@ H3 clips come out quiet (≈ −34 dB measured by a reference setup); level norm
 Shots 4–8 s (default 5, cap `max_shot_seconds` 6 in production), `target_seconds` ≤ 180, review gate `review_threshold` 3.5 (0 disables),
 continuity `fl2v` (default) | `guide` (experimental) | `cut`; ≈ 5 min per 5 s shot on `fast`, ≈ 13 min on `quality`; ≈ 1 h GPU per minute of film.
 - Director console (0.7.0, `director_run`): AIMixer MiniMaxH3 Director on spark-03 only (0.8.9: runs go to the H3 nodes whose ComfyUI lists
-  the Director node and the plan's weights; the PRO 6000 has neither yet); segment joins carry motion + audio (22-frame guide); draft 832×480 ≈ 2 min per 5 s segment, r2v/v2v (ref2va + 4-step LoRA) ≈ 75–180 s; media uploads go to every node; ≤ 24 segments, v2v = 1 segment; diffusion model int8_convrot on all H3 presets since 0.7.0. 0.7.1: `characters` table + dialogue shortcuts; `refine=latent_upscale` (LBH 3D latent upscaler on both nodes) → 1344×768 in the same job.
+  the Director node and the plan's weights; the PRO 6000 has neither yet); segment joins carry motion + audio (22-frame guide); draft 832×480 ≈ 2 min per 5 s segment, r2v/v2v (ref2va + 4-step LoRA) ≈ 75–180 s; media uploads go to every node; ≤ 24 segments, v2v = 1 segment; diffusion model int8_convrot on all H3 presets since 0.7.0. 0.7.1: `characters` table + dialogue shortcuts; `refine=latent_upscale` (LBH 3D latent upscaler on both nodes) → a second-pass canvas of the draft's own aspect ratio in the same job (default: the largest legal one, each side ≤ 1472, area ≤ 1344×768; 832×480 → 1344×768).
 0.6.0 does NOT route storyboard prompts through `prompt_rewrite`; the planner keeps its own renderer (`Style:`/`Location:` prefixes).
-`presets_list.storyboard.ref2v_enabled: false` applies to the older `storyboard_run` renderer, not all H3 references. `director_run` r2v and `storyboard_direct` character references use ref2va. `prompt_rewrite` coverage is a third, separate capability table. `director_run` has no `ref_videos` argument; raw graphs and imported packs require separate validation.
+`presets_list(brief=false).storyboard.ref2v_enabled: false` applies to the older `storyboard_run` renderer, not all H3 references. `director_run` r2v and `storyboard_direct` character references use ref2va. `prompt_rewrite` coverage is a third, separate capability table. `director_run` has no `ref_videos` argument; raw graphs and imported packs require separate validation.
 
 ## Asset library and job states
 Every completed job is copied to MinIO and indexed (prompt, seed, preset, node, review score, tags). Stable URL
-`https://media-mcp.zhenbs.com:10000/assets/<asset_id>`; presigned links last 24 h. Drafts expire after 7 days unless starred / in a collection.
+`https://media-mcp.zhenbs.com:10000/assets/<asset_id>`; presigned links last about 1 hour by default (keep the stable `asset_id` / `asset_url`; re-fetch for a new link). Drafts expire after 7 days unless starred / in a collection.
+Finding by meaning (0.9.20): `assets_search(query="… semantic:<sentence>")` ranks by picture + prompt meaning (fused with the keyword match), `like:<as-id>` finds look-alikes of one work; everything before them and every filter still narrow the search, and the same visibility rules apply (another account's private or hidden works never rank). New works get their vectors in the background only while the embedding GPU is idle (the same gate as the bulk embeddings; older works are back-filled at night), so a fresh or not-yet-embedded work may be missing from the meaning ranking — the reply's `notes` say so; that is not «no such work». The sentence itself is embedded only while that GPU is not drawing or filming (and at most a few at once): otherwise the answer is the keyword ranking with a `notes` line saying so — ask again later rather than concluding nothing matches.
 Historical scores, tags and accepted runs identify candidates, not proof that a new brief's hard constraints are met. Claim a constraint is demonstrated only when the cited original media is inspectable and has been checked against that same requirement; record what remains unverified. Sampled frames cannot certify complete action timing or audio. Choose sound from the current brief: a closed list of allowed sounds excludes added room tone, while no dialogue, no music and complete silence are different requests.
-Waiting: `job_wait(job_id, timeout_s=55)` — always the full 55 s; every call re-sends the whole conversation (a three-picture edit waited on 8 times
+Waiting: `job_wait(job_id, timeout_s=55)` after a submit, until `done` in the same turn (the `asset_id` in the reply is the work number, not the job id) — always the full 55 s; every call re-sends the whole conversation (a three-picture edit waited on 8 times
 cost 1.2 M input tokens on 2026-09-23).
 Job states: `queued_local` → `queued` → `running` → `completed` | `failed` | `lost`; `submission_unknown`, `cancel_pending`,
 `cancel_unconfirmed` need a PERSON (`job_recover`, admin) and keep their node slot meanwhile.
-**Stopping work (0.8.1).** `job_cancel(job_id)` stops a job YOUR token submitted — use it the moment the user says "stop"/"取消"
-about something still running, instead of letting a 15-minute `quality` render finish and bill the token's GPU budget. Someone
-else's job answers `forbidden`; `jobs_list` marks every row with `can_cancel` / `cancel_hint` and repeats the stoppable ids in
-`cancellable`. A node that confirms the stop leaves the job `failed`; a node that does not leaves it `cancel_pending` (still holding
-its slot, re-asked automatically). Cancelling something already finished is not an error — the reply says `cancelled: false`.
-Storyboard SHOT jobs are refused (one stopped shot just makes the run retry it): a run has to be stopped from the console.
+**Stopping work (0.8.1; one call for everything since 0.9.4).** `job_cancel(job_id)` stops whatever YOUR token has in flight — an image / music /
+video job (`video-…`), a director run (`workflow-…`) or a per-shot film (`run-…`, what `storyboard_run` returns). Use it the moment the user says
+"stop"/"取消" instead of letting a 15-minute `quality` render finish. Someone else's work answers `forbidden`; `jobs_list` marks every row with
+`can_cancel` / `cancel_hint` and repeats the stoppable ids in `cancellable`. A `run-…` is stopped as a whole (the shot being rendered is asked to stop,
+no later shot is sent, the film ends `cancelled` and cannot be continued). To know whether something was cancelled read the `cancelled` field
+(on `job_cancel`, every `*_status`, `storyboard_status` and `jobs_list` rows) — never parse `error`: `cancelled: true` = it ended because somebody
+cancelled it (`cancelled_by` says who), `cancelling: true` = the stop is asked but the node has not confirmed yet (it still holds its slot). A cancelled
+job frees its slot and does not count in `daily_jobs`; GPU seconds already spent stay in `gpu_seconds_month`. Cancelling something already finished is
+not an error — the reply says `stopped_now: false` and `cancel.outcome` (`cancelled` keeps its one meaning: it ended because of a cancel; since 0.9.4 that holds on the `job_cancel` reply too, `stopped_now` says what the call did). Single storyboard SHOT jobs (`shot-…`) are refused: stop the whole `run-…`.
 
 ## Etiquette
 Record every seed for comparisons; reproducibility also depends on model/workflow/runtime and is not a bitwise guarantee. `backend_unreachable` / `queue_full`: wait and retry, never spam.
@@ -139,5 +152,5 @@ A cloud preset is money: never lottery on it unless asked; a missing key answers
 Errors are `<code>: <detail>` with code ∈ backend_unreachable, backend_timeout, backend_rejected, backend_error, storage_error,
 invalid_preset, invalid_argument, queue_full, job_not_found, forbidden, limit_exceeded, and (0.6.0) unsupported_target,
 unsupported_references, unsupported_language, rewrite_failed, prompt_not_found, prompt_not_usable, prompt_binding_mismatch,
-idempotency_in_progress, idempotency_failed, profile_not_found.
+idempotency_in_progress, idempotency_failed, profile_not_found, and (0.9.4) deletion_pending (the work is being deleted — claimed by the sweep or asset_delete — and this call changed nothing; same meaning as asset_delete's per-id `deletion_pending`).
 - Fetch `url` is the temporary browser link; `asset_url` is the stable authenticated record. Keep signed URLs unchanged and renew via fetch when expired. Pass `job_id` to review and `asset_id` to director references; accepted media arguments differ by tool. See `media-inputs.md` for the per-tool table. Cloud availability is on each preset/voice entry (`cloud`, `available`), not a top-level `cloud` section.

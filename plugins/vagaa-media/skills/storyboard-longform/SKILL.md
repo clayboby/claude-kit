@@ -1,15 +1,15 @@
 ---
 name: storyboard-longform
 description: Load for anything longer than one clip or with more than one shot: short film, ad, promo, MV, short drama, story adaptation, script to video. 中文触发：分镜、镜头表、短片、宣传片、广告片、MV、短剧、剧本、列分镜、第 N 镜改一下、开拍、继续拍、接着上次。Turns a brief into a shot list (storyboard_plan), edits shots (storyboard_plan_update), keeps characters consistent, runs/resumes/assembles (storyboard_run / director_run), and how to report a long run to the user.
-verified_against: media-mcp 0.8.11 (2026-09-30)
+verified_against: media-mcp 0.9.21 (2026-11-05)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 127795d33dd2c0c7a765660895fbf77d0555075e8598e7ae729d2610b4823d08
+shared_facts_sha256: d282274761849abcb52758a63eb81bde5dc93d22aa9a2d0581f2e4ec636ffcf0
 when_to_use: 用户要多镜头、要分镜、要改某一镜、要开拍/续拍时加载；单镜 10 秒以内的小片用 media-production。
 ---
 Vendor guidance and the scope of historical evidence: `../_shared/provenance.md` (read when changing workflows).
 
 # Long videos: the storyboard pipeline (`storyboard_*`)
-For a film beyond `presets_list.defaults.max_seconds` (currently 15 s), choose the storyboard pipeline or Director segments below; do not hand-chain `video_submit`.
+For a film beyond `presets_list.defaults.effective_max_seconds`, choose the storyboard pipeline or Director segments below; do not hand-chain `video_submit`. A token's own `max_seconds` (`capabilities().principal.limits`; absent = none) is a different limit: `director_run` checks it against the TOTAL of all segments (a film over it is made shorter, every segment scaled down by the same ratio, and the reply says `clamped_to` and `segments_clamped`: tell the person), so splitting into segments does not get around it, while `storyboard_run` checks it per shot. If the film is longer than the token allows, plan it with a storyboard whose every shot fits, or shorten the film and say so.
 Facts (shot limits, timings, review gate, continuity modes): `../_shared/cluster-facts.md`. Single-clip prompt wording: `video-prompting`.
 Reference images / identity across shots is split: cross-shot continuity is this skill; reference-driven generation is `image-edit-and-reference`.
 
@@ -32,12 +32,11 @@ Five lines at the top of the plan notes, judged before any technique: 1) one sen
 - Read `plan.shots[*]` and `shot_prompts` (the exact H3 prompts the runner will send; they carry the planner's own `Style:` / `Location:` prefixes —
   0.6.0 does not route storyboard prompts through `prompt_rewrite`). Fix wrong beats, split shots whose dialogue does not fit (~3 words/s, 1 s
   speech-free margin at both ends), set `transition: "continue"` only when the next shot really continues in the same place; then
-  `storyboard_plan_update(plan_id, plan)`. `warnings` lists what the validator changed. `storyboard_plan_get(plan_id)` re-reads a stored plan.
+  `storyboard_plan_update(plan_id, plan)`. `warnings` lists what the validator changed. A speaker marked 旁白 / V.O. / O.S., or one the character table does not know, is a voice-over and never drawn; a known character who speaks without being listed in the shot's `characters` is drawn. Both cases come back as a warning (`未登记说话人` / `漏登记说话人`): when you see one, tell the owner in one plain sentence which character was not registered, then fix the plan if they want. `storyboard_plan_get(plan_id)` re-reads a stored plan.
 
 ## 2. Run
 `storyboard_run(plan_id, preset="fast", seed=<fixed>, continuity="fl2v"|"guide"|"cut", review_threshold=3.5, max_retries=2)` → `run_id` at once.
-- Budget ≈ 5 min per 5 s shot on `fast`, ≈ 13 min on `quality`, times attempts; ≈ 1 h of GPU per minute of film. Poll `storyboard_status(run_id)`
-  every 60–120 s: `stage` names the shot being rendered, `progress.eta_s` extrapolates from finished shots.
+- Budget ≈ 5 min per 5 s shot on `fast`, ≈ 13 min on `quality`, times attempts; ≈ 1 h of GPU per minute of film. Wait with `storyboard_wait(run_id)` (≤ 55 s per call; `storyboard_status(run_id)` is the one-shot read): `stage` names the shot being rendered, `progress.eta_s` extrapolates from finished shots.
 - `continuity`: `fl2v` (default) hands the previous last frame to the next shot; `cut` for montage / multi-location pieces (no seams to protect);
   `guide` (experimental) anchors the last 22 frames + audio and falls back to `fl2v` if ComfyUI rejects it. `review_threshold=0` disables the gate.
 - `quality` is for a final render after the plan and its `fast` output meet the current brief's hard constraints; a historical score alone is not approval. Recheck the final itself; a larger preset does not fix planning.
@@ -48,7 +47,7 @@ Five lines at the top of the plan notes, judged before any technique: 1) one sen
   plan using `storyboard_plan_update`, then resume the latest run. Changed shot fingerprints render again; unchanged completed shots are reused.
   Continuity may invalidate downstream shots too; a low score alone does not force a redo. `seams_cut` lists continuations downgraded to hard cuts.
 - **Interrupted runs**: `storyboard_run(resume_run_id=<run>)` ALONE continues after a restart / timeout — done shots reused, an in-flight backend job adopted; a run is continued at most once. `blocked` is not terminal: the reply names the shot job and the actions; `submission_unknown` /
-  `cancel_pending` / `cancel_unconfirmed` need `job_recover` by a person (see `media-production`) before a resume is accepted.
+  `cancel_pending` / `cancel_unconfirmed` need `job_recover` by a person (see `media-production`) before a resume is accepted. **Stop a film**: `job_cancel(job_id=<run-…>)` stops the whole run (no later shot sent, ends `cancelled`, cannot be resumed); read the `cancelled` field, not `error`.
 - Every shot is also a normal job: `jobs_list(service="shot")`, `video_review(source=job_id)` for a second opinion, `asset_get(asset_id)` per shot.
 
 ## 4. Assemble and deliver
@@ -76,7 +75,7 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
 - Seconds snap UP to H3's 17k+5 frame grid (5 s → 124 frames, 4 s → 107); 0.2–15 s per segment. Keep a plan ≤ 24 segments.
 - v2v takes its length from the source (ffprobe), not from `seconds`; sources over 362 frames (~15 s) are rejected: trim first.
 - Draft = 832×480 (default). Final = width 1344, height 768 (7:4, not exact 16:9) — same call, ~4× the time. Never iterate prompts on a final.
-- fl2v with only a first frame tends to stay still (C03 seg 1, 2026-09-15: 4–8 s motion ≈ 0.1 with a first frame alone, 0.7–1.1 once a last frame was added): give it an end frame; the join after a given last frame carries a ~2-frame transition that no wording removes.
+- A segment with only a first frame runs as the node's i2v task since 0.9.1 (I-1, 2026-10-05: as fl2v it held the frame — motion ≈ 0.1 in C03 seg 1 — or an invented second person did the motion, and the clip drifted back). Add a last frame only when the shot must end in a given state; the join after a given last frame carries a ~2-frame transition that no wording removes.
 - r2v references live on the segment (the node ignores plan-level references): always attach `ref_images`/`ref_audios` to the segment that uses them and cite `<Picture N>` / `<Audio N>` in that prompt.
 - `video_submit(prompt, preset="director_t2v")` runs the same director graph for ONE text segment — a quick single clip on the director models; multi-segment or media-driven work goes through `director_run`.
 - 0.7.1 character table — declare once, mention anywhere:
@@ -88,7 +87,7 @@ director_status(run_id) → queued|running|completed|failed|lost ; director_fetc
   becomes `<Picture N> says in the voice of <Audio M>: <d>[Chinese] 台词</d>`; `旁白: …` / `Narrator: …` becomes an off-screen voice-over
   with lips closed. Characters cannot be mentioned in a segment that carries a first/last frame or a source video (rejected before upload).
 - **Truly continuous shots (one action, one scene) must render their final at native size (`width=1344, height=768`, no `refine`)**: both refine modes run per segment after continuity was established at draft size, so every real seam becomes a one-frame jump of ~7× the median frame difference and the audio at a join can clip to 0 dB (C03 finals A/B, `reference/c03-short-20260915/README.md`). Cut-style storyboards are not seams: see "Which final to make".
-- 0.7.1 final quality: `refine="latent_upscale"` (+ `refine_width=1344, refine_height=768`) enlarges the draft's H3 latent with the 3D
+- 0.7.1 final quality: `refine="latent_upscale"` (+ `refine_width=1344, refine_height=768` for the 832×480 default draft; leave both out for another draft: the second pass keeps the draft's ratio, so a size that would come out differently is refused with the nearest valid one) enlarges the draft's H3 latent with the 3D
   upscaler in the same job — no second sampling; `director_fetch` reports `refine_applied` (false + a warning means the node fell back
   to the draft). In fl2v plans the given frames pass through the upscaler too. Iterate prompts on drafts, add `refine` only for the accepted plan. (Second sampling is exposed as refine=upscale; check its result flag.) Spoken lines never carry tags: an `@alias` inside a line someone speaks
   becomes the plain name, while the character is still attached.
