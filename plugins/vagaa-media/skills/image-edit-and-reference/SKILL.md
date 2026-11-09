@@ -1,9 +1,9 @@
 ---
 name: image-edit-and-reference
 description: Load when the user wants to CHANGE an existing image or video rather than make a new one, or keep something consistent: edit/retouch an image, change clothes or background, swap a person, transfer motion from a video, animate a still, use a reference image, keep a character or product identical across shots. 中文触发：改图、修图、换装、换背景、换人、换脸、动作迁移、让这张图动起来、参考图、保持一致、同一个人。Tells which routes exist today (Director fl2v/ref2v/v2v, reverse_prompt, raw workflow) and which have NO tool yet, so you can say so honestly.
-verified_against: media-mcp 0.9.27 (2026-11-06)
+verified_against: media-mcp 0.9.41 (2026-11-09)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: d282274761849abcb52758a63eb81bde5dc93d22aa9a2d0581f2e4ec636ffcf0
+shared_facts_sha256: 0d7010734e2bbbd31530c49d63c8e2060b77b1f93facb4aa555cec67bcc39504
 when_to_use: 用户拿着已有的图/视频要改、要保持一致、要参考时加载；只是从零画一张新图用 media-production。
 ---
 
@@ -50,7 +50,8 @@ does not prove the unrequested regions were preserved. Report when the compariso
 ## 4. Raw graphs (`workflow_submit`) as the escape hatch
 `workflow_submit(graph_json, overrides)` runs a ComfyUI API-format graph as-is (scope `workflow.raw`); `workflow_status` / `workflow_fetch` return every
 SaveImage / video output. Use only with a graph the operator supplied for that model (node ids, model files and the node that has the weights
-differ between `comfy` and `comfy102`); never invent node ids. Outputs are indexed like any other job.
+differ from node to node); never invent node ids. Outputs are indexed like any other job. `tags` (optional; lower-cased, 1–48 characters each, at most 32)
+go on the work it makes: `workflow_submit(graph_json, tags=["transient"])` marks a middle product you will delete soon, and the library never embeds a work tagged `transient`.
 
 ## 5. Writing an `image_edit` instruction (Qwen-Image 2.1)
 - **Name the pictures `<image1>`, `<image2>` … `<imageN>`** in the order of `images` (e.g. "put the coat from <image2> on the woman in <image1>, keep her face, hair and pose"); a single picture needs no tag. Never "the first image" / "图1".
