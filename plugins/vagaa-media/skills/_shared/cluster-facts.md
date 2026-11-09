@@ -21,26 +21,26 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
 ## Nodes and lanes (2026-09-26, media-mcp 0.8.9)
 - **comfy-pro = RTX PRO 6000** (the fastest node; its GPU is shared with its own Qwen3.8-27B, and an image job that lands there has its
   official-PE prompt rewrite done by that 27B, not by the cluster's flash lane). Qwen-Image 2.1 + Krea2 + (0.8.9, SCHED1) MiniMax-H3 kept
-  loaded: first choice for every `image_submit` preset, `image_edit`, the four H3 `video_submit` presets and storyboard shots. It has NO
-  AIMixer Director node, ref2va, refine / latent-upscale weights, SPAN upscaler, Wan / SCAIL or music: `director_run` / `storyboard_direct` /
-  `director_pack_run`, `video_upscale`, `character_swap`, `motion_animate`, music and raw graphs stay on spark-03 (0.8.9 checks the node's own
-  listing, so a director run records `nodes_skipped: {comfy-pro: [...]}`). Measured 2026-09-26 (SCHED1): H3 `draft` 5 s ≈ 30–45 s, 10 s ≈ 85 s,
+  loaded: first choice for every `image_submit` preset, `image_edit`, the four H3 `video_submit` presets and storyboard shots. It has no
+  Wan / SCAIL or music and takes no raw graphs: `character_swap`, `motion_animate`, music and raw graphs stay on the GB10 nodes; a `director_run` /
+  `storyboard_direct` / `director_pack_run` or `video_upscale` goes only to a node whose ComfyUI lists what it needs (0.8.9 checks the node's own
+  listing, so a director run records `nodes_skipped: {comfy-pro: [...]}` when the PRO lacks a weight). Measured 2026-09-26 (SCHED1): H3 `draft` 5 s ≈ 30–45 s, 10 s ≈ 85 s,
   `fast` 15 s 1344×768 ≈ 13 min (≈ 22 min while its 27B is saturated). Images: Measured 2026-09-23 (IMG21-PRO6000, IMG-BAKEOFF): Krea 1024² ≈ 4–5 s, 2 MP (1448²) ≈ 9 s; Qwen 2.1 T2I 2 MP/25 steps/cfg 1 ≈ 12 s (since 0.9.3 the default; 4 MP/40 steps ≈ 50 s = the `-fine` presets; cfg 3.5 ≈ 107 s, no longer used); edit one picture at
   the 2K budget ≈ 85–95 s, three ≈ 190 s, five ≈ 285 s, ten at 1440 ≈ 220 s. Under a busy 27B lane a job can take 2–3× longer.
-- **comfy102 (earlier name `comfy2`) = spark-03**: the H3 fallback after the PRO 6000 (0.8.9) and the ONLY node for the Director console, `video_upscale`, character
-  chains and music: `draft` 5 s ≈ 2 min, `fast` 15 s ≈ 40 min; music models (ACE-Step, Stable Audio 3, YuE2) live ONLY here. Image fallback: Krea ≈ 20–30 s, Qwen 2.1 1 MP/25 steps ≈ 18 s warm, edit ≈ 42–54 s.
-- **comfy = spark-04**: images only — no video since 2026-09-23 (its memory is shared with the home voice stack). Krea stays resident
-  (`resident_family: krea`) and by default it takes Krea only: a `qi21-*` preset or `image_edit` never lands there. When the operator turns the
-  family switch on (`MEDIA_MCP_FAMILY_FREE=1`), every `qi21-*` preset and `image_edit` reach it only as the LAST fallback after the PRO 6000 and spark-03, and
-  such a job runs alone: ComfyUI is freed first, Krea is loaded back afterwards (a cold load each time, so expect it to be slow).
+- **comfy102 (earlier name `comfy2`) = spark-03**: a GB10 node — with comfy101 / comfy104 (next line) the H3 fallback after the PRO 6000 (0.8.9) and the nodes for the Director console, `video_upscale`, character
+  chains and music: `draft` 5 s ≈ 2 min, `fast` 15 s ≈ 40 min; music models (ACE-Step, Stable Audio 3, YuE2) live only on these three GB10 nodes. Image fallback: Krea ≈ 20–30 s, Qwen 2.1 1 MP/25 steps ≈ 18 s warm, edit ≈ 42–54 s.
+- **comfy101 / comfy104 = two more GB10 nodes built like comfy102** (same ComfyUI version and model set in the registry, read 2026-11-09): the presets list the
+  three — every local `image_submit` preset and the qi21 edit presets `comfy102, comfy101, comfy104` after the PRO 6000, H3 video and storyboard shots
+  `comfy101, comfy104, comfy102` after it, and `qwen-edit-2511`, `music_submit` and `image_upscale` on these three only. The spark-04 `comfy` image node (Krea resident, the family switch, the last image fallback)
+  was retired in 0.9.28: no job goes there.
 - ComfyUI runs one queue serially per node: an image queued behind a running H3 job waits for the whole job (+250 s measured). The pool
   therefore keeps flexible jobs off a node holding a LONG job (`fast`/`daily`/`quality`, any clip ≥ 10 s, storyboard / director ≥ 10 s): while
-  the PRO 6000 renders a 15 s final, new images and the next video go to spark-03 (images also spark-04). A second SHORT draft stays queued on
-  the PRO 6000 (it still finishes first: 65 s vs 110 s on spark-03); a third, with the PRO's two slots full, goes to spark-03.
+  the PRO 6000 renders a 15 s final, new images and the next video go to a GB10 node. A second SHORT draft stays queued on
+  the PRO 6000 (it still finishes first: 65 s vs 110 s on spark-03); a third, with the PRO's two slots full, goes to a GB10 node.
 - Text/vision lane: `qwen38-flash-next-nvfp4` (spark-01/02, 512K context, multimodal); planner, reviewer, the H3 rewriter, reverse prompts
   and the image rewrite of GB10 jobs use it. `Qwen3.8-27B` (PRO 6000, 262K context, multimodal) is a second text model behind the same
   gateway `/v1` and rewrites the prompts of PRO 6000 jobs. `presets_list.models` is the live list.
-- TTS: Qwen3-TTS-12Hz-1.7B on spark-04 `ha-tts-stream2` (vLLM-Omni, shared with the home agent; ≈0.4× real time, long text read in ≤150-character chunks two at a time and joined; `lang` sets the reading language: zh/en/ja/ko/de/fr/ru/pt/es/it); translation: Hy-MT2 on spark-04.
+- TTS: Qwen3-TTS-12Hz-1.7B-CustomVoice on the home voice machine, lane `lane-tts-rt` (vLLM-Omni, shared with the home agent; ≈0.4× real time, long text read in ≤150-character chunks two at a time and joined; `lang` sets the reading language: zh/en/ja/ko/de/fr/ru/pt/es/it); translation: Hy-MT2 on the same machine.
 
 - **Bulk embeddings are gated (0.7.55).** WeMM (spark-03) shares its GPU with `comfy102`; `embed_batch_*` jobs run only while `comfy102` has been idle 30 s and pause within one chunk when film work arrives (an H3 draft ran 2× slower under a WeMM burst, 2026-09-19). One query-time embedding goes straight through the gateway `/v1/embeddings` (since 0.9.20 an `assets_search` sentence also checks that gate's verdict first).
 
@@ -52,8 +52,8 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
 | `fast` | 1344×768, Turbo 8 | 15 s ≈ 13 min on the PRO 6000 (≈ 40 min on spark-03) | everyday final; same seed as the approved draft |
 | `daily` | 1344×768, Base 8, no LoRA | as `fast` | when the Turbo look is not wanted |
 | `quality` | 1344×768, Base 20 | ≈ 2.5× `fast` | final only, one candidate at a time, never iterate |
-Placement (0.8.9): PRO 6000 first, spark-03 when the PRO is holding a long clip, has both slots taken or is unreachable; spark-04 never.
-The same seed on the two nodes gives the same scene, not a bit-identical file (different GPUs).
+Placement (0.8.9; GB10 list 2026-11-09): PRO 6000 first, then the GB10 nodes in the preset's order (`comfy101, comfy104, comfy102`) when the PRO is holding a long clip, has both slots taken or is unreachable.
+The same seed on the PRO 6000 and a GB10 node gives the same scene, not a bit-identical file (different GPUs).
 Cloud video presets (all `available: false` until keyed): `bailian-wan27`, `ark-seedance`, `kling-std`, `vidu-turbo`, `hailuo-23`, `veo-fast`, `flux3-draft`.
 Output is video WITH generated audio (speech, ambience). `video_status.progress` stays null on the ComfyUI lane: poll every 20–30 s.
 The five local video presets (`draft`, `preset="director_t2v"`, `fast`, `daily`, `quality`) have no `image_url` channel. Check `presets_list.video[preset].image_url_supported` for Comfy presets; use Director `fl2v` with `first_frame` for image-to-video. A reference stored in a request is not proof it conditioned the model.
@@ -96,7 +96,7 @@ words as written; an English prompt of 120+ words is kept as written; a defaulte
 painted a background and a transparent sticker lost its transparency. Another known cost from that A/B: a night scene came out too dark. The reply carries `prompt` (the text sent), `prompt_id` and `per_node` sizes; `image_status` /
 `job_wait` / `image_fetch` carry `sent_prompt` (what the model got), `caller_prompt` (your words), `rewrite_status` and `was_rewritten`.
 **Turbo presets (not the default of anything):** `qi21-turbo` (1:1) and `qi21-turbo-text` (2:3) for `image_submit`, `qi21-turbo-edit` for `image_edit`: the same Qwen-Image 2.1
-distilled to the official 8 steps, on the PRO 6000 and spark-03 only (never spark-04). There is no steps / cfg to set (`image_edit` refuses them). The two text-to-image Turbo presets rewrite by default like `qi21-t2i` (the Turbo profile; PRO 6000: ~5 s a picture + the 3-4 s rewrite), `qi21-turbo-edit` does not (like every edit preset). Use one only when the person names Turbo: `image_submit(model="qi21-turbo")` / `image_edit(model="qi21-turbo")` with the
+distilled to the official 8 steps, on the PRO 6000 and the three GB10 nodes. There is no steps / cfg to set (`image_edit` refuses them). The two text-to-image Turbo presets rewrite by default like `qi21-t2i` (the Turbo profile; PRO 6000: ~5 s a picture + the 3-4 s rewrite), `qi21-turbo-edit` does not (like every edit preset). Use one only when the person names Turbo: `image_submit(model="qi21-turbo")` / `image_edit(model="qi21-turbo")` with the
 preset you would pick by route (the service moves it to the Turbo twin; the reply's `model_remap` says which, and `tier_dropped` when a finer tier became the plain one). A route Turbo
 lacks (transparent PNG) is `invalid_argument`. Nothing routes work there on its own, and the same seed does not give the same picture as the 2.1 presets.
 **`image_edit` presets:** `qi21-edit` (default; Qwen-Image 2.1; 1–10 pictures; PRO 6000 40 steps at a 2K budget, GB10 25 steps at 1 MP),
@@ -107,8 +107,8 @@ official PE-I2I rewriter on the pictures first (+15–60 s; no gain on four clea
 Six or more people in one picture: identities may mix (2026-09-23, IMG21-GB10). Cloud image presets (unkeyed): `qwen-image-pro`,
 `seedream-pro`, `flux2-pro`. Raw graphs: `workflow_submit` (ask for a template first; they run on the GB10 nodes only).
 
-## Music / SFX / song presets (comfy102 only)
-`bgm-draft` (ACE-Step 1.5 XL-turbo on comfy102 only, 30 s, MP3, lottery here), `bgm-final` (60–300 s FLAC, same prompt+seed+bpm+key, never lottery) — instrumental BGM only: lyrics / instrumental=false / singing words are refused since 0.8.10 (songs are `song` / `cover`),
+## Music / SFX / song presets (the three GB10 nodes only: comfy102, comfy101, comfy104)
+`bgm-draft` (ACE-Step 1.5 XL-turbo on the GB10 nodes only, 30 s, MP3, lottery here), `bgm-final` (60–300 s FLAC, same prompt+seed+bpm+key, never lottery) — instrumental BGM only: lyrics / instrumental=false / singing words are refused since 0.8.10 (songs are `song` / `cover`),
 `sfx` (Stable Audio 3 small-sfx, accepts 1–60 s FLAC; 2–8 s is a typical short cue, no lyrics/bpm/key). BGM accepts 1–600 s. Check the live preset and schema for the requested length. Cloud: `fun-music` (unkeyed).
 MUSIC2 (2026-09-26): `song` (YuE2-3B, vocals, lyrics required, int8 default / bf16, cot full|melody|off, 240 s cap, ≈1× realtime on the GB10) and
 `cover` (source ≤ 240 s via `asset_upload` / a music job / URL → SheetSage2 melody → re-sung in the new style; no voice cloning). Both are
@@ -122,8 +122,8 @@ H3 clips come out quiet (≈ −34 dB measured by a reference setup); level norm
 ## Storyboard
 Shots 4–8 s (default 5, cap `max_shot_seconds` 6 in production), `target_seconds` ≤ 180, review gate `review_threshold` 3.5 (0 disables),
 continuity `fl2v` (default) | `guide` (experimental) | `cut`; ≈ 5 min per 5 s shot on `fast`, ≈ 13 min on `quality`; ≈ 1 h GPU per minute of film.
-- Director console (0.7.0, `director_run`): AIMixer MiniMaxH3 Director on spark-03 only (0.8.9: runs go to the H3 nodes whose ComfyUI lists
-  the Director node and the plan's weights; the PRO 6000 has neither yet); segment joins carry motion + audio (22-frame guide); draft 832×480 ≈ 2 min per 5 s segment, r2v/v2v (ref2va + 4-step LoRA) ≈ 75–180 s; media uploads go to every node; ≤ 24 segments, v2v = 1 segment; diffusion model int8_convrot on all H3 presets since 0.7.0. 0.7.1: `characters` table + dialogue shortcuts; `refine=latent_upscale` (LBH 3D latent upscaler on both nodes) → a second-pass canvas of the draft's own aspect ratio in the same job (default: the largest legal one, each side ≤ 1472, area ≤ 1344×768; 832×480 → 1344×768).
+- Director console (0.7.0, `director_run`): AIMixer MiniMaxH3 Director on the H3 nodes whose ComfyUI lists
+  the Director node and the plan's weights (0.8.9, checked per run; `nodes_skipped` names a node that lacks something); segment joins carry motion + audio (22-frame guide); draft 832×480 ≈ 2 min per 5 s segment, r2v/v2v (ref2va + 4-step LoRA) ≈ 75–180 s; media uploads go to every node; ≤ 24 segments, v2v = 1 segment; diffusion model int8_convrot on all H3 presets since 0.7.0. 0.7.1: `characters` table + dialogue shortcuts; `refine=latent_upscale` (LBH 3D latent upscaler on both nodes) → a second-pass canvas of the draft's own aspect ratio in the same job (default: the largest legal one, each side ≤ 1472, area ≤ 1344×768; 832×480 → 1344×768).
 0.6.0 does NOT route storyboard prompts through `prompt_rewrite`; the planner keeps its own renderer (`Style:`/`Location:` prefixes).
 `presets_list(brief=false).storyboard.ref2v_enabled: false` applies to the older `storyboard_run` renderer, not all H3 references. `director_run` r2v and `storyboard_direct` character references use ref2va. `prompt_rewrite` coverage is a third, separate capability table. `director_run` has no `ref_videos` argument; raw graphs and imported packs require separate validation.
 
