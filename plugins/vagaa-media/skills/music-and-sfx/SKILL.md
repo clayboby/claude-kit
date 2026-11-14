@@ -1,13 +1,13 @@
 ---
 name: music-and-sfx
 description: Load for background music, BGM, soundtrack, jingle, beat/rhythm track, sound effects or ambience for a video, and for a SONG with vocals or a COVER of an existing song (YuE2). 中文触发：配乐、背景音乐、BGM、音效、环境音、卡点音乐、来段音乐、vlog 开头那种、写首歌、唱出来、翻唱、换个风格唱、用这首歌的旋律。Plans music and SFX separately (music_submit presets bgm-draft/bgm-final/sfx; mode song/cover + asset_upload for songs), explains mixing limits. NOT for narration or spoken lines — that is tts in media-production.
-verified_against: media-mcp 0.9.41 (2026-11-09)
+verified_against: media-mcp 0.9.49 (2026-11-14)
 shared_facts: ../_shared/cluster-facts.md
-shared_facts_sha256: 0d7010734e2bbbd31530c49d63c8e2060b77b1f93facb4aa555cec67bcc39504
+shared_facts_sha256: 5ecf8453a098a936dc6ea6926db443da2953c3a86bc2db602c8626c878f0a25d
 when_to_use: 用户要音乐、音效、氛围声时加载；要人声旁白/台词时不加载本 skill。
 ---
 
-# Music, songs and sound effects (YuE2 + ACE-Step + Stable Audio 3 on comfy102)
+# Music, songs and sound effects (YuE2 + ACE-Step + Stable Audio 3 on the three GB10 nodes)
 
 ## 0. Which engine (decide first — a fixed rule, not a taste call)
 - **Anything sung** — a song, lyrics, a vocal, a melody to write and sing (写歌 / 作曲 / 唱) → YuE2: `music_submit(mode="song")` (§5). Re-singing an **existing song** in a new style (翻唱) → `mode="cover"` (§5). Owner's ruling 2026-09-28: every song goes to YuE2; ACE never makes a song.
@@ -20,7 +20,7 @@ Publisher skills and their API differences: `../_shared/provenance.md`; read the
 Use the current brief's sound requirements: a closed list of permitted sounds excludes added ambience or room tone. No dialogue, no music and complete silence are different constraints; do not add a score or impose silence by default. Verify requested audio in the original media, not from an image-based review score.
 
 ## 1. BGM
-`music_submit(prompt=<style / instrument / mood tags>, preset="bgm-draft", seconds=30, seed=<fixed>, bpm=<int>, key="A minor")` → `job_wait(job_id)` until `done` (rule: do not ask the person whether to wait) → give them the `asset_id` (`as-…`, not the `music-…` job id); `music_fetch(job_id)` only for a download URL (MP3). Draft is 30 s and cheap (ACE-Step 1.5 XL-turbo, 8 steps; BGM runs on one node only, so it queues when that node is busy): run a lottery (`seeds=[...]`, ≤ 8), pick
+`music_submit(prompt=<style / instrument / mood tags>, preset="bgm-draft", seconds=30, seed=<fixed>, bpm=<int>, key="A minor")` → `job_wait(job_id)` until `done` (rule: do not ask the person whether to wait) → give them the `asset_id` (`as-…`, not the `music-…` job id); `music_fetch(job_id)` only for a download URL (MP3). Draft is 30 s and cheap (ACE-Step 1.5 XL-turbo, 8 steps; BGM can run on any of the three GB10 nodes and may queue behind work on the one it is placed on): run a lottery (`seeds=[...]`, ≤ 8), pick
 by ear / rubric, then re-submit the **same prompt + seed + bpm + key** on `preset="bgm-final"` with the real length (60–300 s, FLAC). Never lottery on
 `bgm-final`. ACE is instrumental only: no `lyrics`, no `instrumental=false`, no singing words in the tags ("instrumental, no vocals" is fine) — words to be sung mean a song (§5).
 
