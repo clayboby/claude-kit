@@ -70,6 +70,11 @@ esac
 # argv of its own either. Nothing is written to disk.
 probe_body='{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
 token="${CLAUDE_PLUGIN_OPTION_NOLE_CREDENTIAL:-}"
+if [ -z "$token" ]; then
+  # No credential: do not send an empty Bearer (the gateway logs it as a 401 every session start).
+  say "${LABEL}: no credential configured, so its tools will be refused this session — tell the user once: /plugin → Installed → vagaa-web-evidence → Configure options (credential), then /reload-plugins."
+  exit 0
+fi
 esc_url="${URL//\\/\\\\}"; esc_url="${esc_url//\"/\\\"}"
 esc_token="${token//\\/\\\\}"; esc_token="${esc_token//\"/\\\"}"
 esc_body="${probe_body//\\/\\\\}"; esc_body="${esc_body//\"/\\\"}"
