@@ -33,7 +33,7 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
   chains and music: `draft` 5 s ≈ 2 min, `fast` 15 s ≈ 40 min; music models (ACE-Step, Stable Audio 3, YuE2) live only on these three GB10 nodes. Image fallback: Krea ≈ 20–30 s, Qwen 2.1 1 MP/25 steps ≈ 18 s warm, edit ≈ 42–54 s.
 - **comfy101 / comfy104 = two more GB10 nodes built like comfy102** (same ComfyUI version and model set in the registry; the listings of all three carry the Director nodes, the fl2va, ref2va and refine weights and the SPAN model; read 2026-11-09): the presets list the
   three — every local `image_submit` preset and the qi21 edit presets `comfy102, comfy101, comfy104` after the PRO 6000, H3 video and storyboard shots
-  `comfy101, comfy104, comfy102` after it, and `qwen-edit-2511`, `music_submit` and `image_upscale` on these three only. The old `comfy` image node (it held Krea resident, ran the family switch, and was the last image fallback)
+  `comfy101, comfy104, comfy102` after it, and `music_submit` and `image_upscale` on these three only. The old `comfy` image node (it held Krea resident, ran the family switch, and was the last image fallback)
   was retired in 0.9.28: no job goes there.
 - ComfyUI runs one queue serially per node: an image queued behind a running H3 job waits for the whole job (+250 s measured). The pool
   therefore keeps flexible jobs off a node holding a LONG job (`fast`/`daily`/`quality`, any clip ≥ 10 s, storyboard / director ≥ 10 s): while
@@ -103,7 +103,7 @@ distilled to the official 8 steps, on the PRO 6000 and the three GB10 nodes. The
 preset you would pick by route (the service moves it to the Turbo twin; the reply's `model_remap` says which, and `tier_dropped` when a finer tier became the plain one). A route Turbo
 lacks (transparent PNG) is `invalid_argument`. Nothing routes work there on its own, and the same seed does not give the same picture as the 2.1 presets.
 **`image_edit` presets:** `qi21-edit` (default; Qwen-Image 2.1; 1–10 pictures; PRO 6000 40 steps at a 2K budget, GB10 25 steps at 1 MP),
-`qi21-edit-quality` (cfg 3.5 + negative, twice the time), `qwen-edit-2511` (the old model, 1–3 pictures, fallback only). Reference
+`qi21-edit-quality` (cfg 3.5 + negative, twice the time), `qi21-turbo-edit` (the official 8-step schedule, about half the time; no steps / cfg). Reference
 pixels are capped per node — PRO 6000 21 MP (1–5 pictures at 2048, 6 at 1856, 7–8 at 1600, 9–10 at 1440; ten at 2048 ran out of
 memory), GB10 10.5 MP — and the reply warns when it lowered `resolution`. The instruction is sent as written; `rewrite="auto"` runs the
 official PE-I2I rewriter on the pictures first (+15–60 s; no gain on four clear instructions in the A/B — use it for a vague one).
