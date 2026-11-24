@@ -4,10 +4,18 @@ A bundle. It ships no skills, no hooks, no commands and no MCP servers of its ow
 installs [`vagaa-media`](../vagaa-media) and [`vagaa-web-evidence`](../vagaa-web-evidence) together,
 through the `dependencies` field of its manifest.
 
+## Install
+
+### Claude Code (CC)
+
 ```
 /plugin marketplace add clayboby/claude-kit
 /plugin install vagaa-dgx@claude-kit
 ```
+
+### sema
+
+与 CC 共用同一个 GitHub 插件市场 `clayboby/claude-kit`（插件名 `vagaa-dgx@claude-kit`）；具体 sema 安装命令本仓未记录（**未核**）。
 
 **The bundle install does not prompt for the two plugins' options** (checked with Claude Code
 2.1.280): both arrive enabled but unconfigured, and their MCP servers do not start. Configure each
@@ -26,7 +34,7 @@ enabled dependent stays enabled.
 |---|---|
 | Plugin version | **0.3.6** |
 | Requires Claude Code | **≥ 2.1.259** (plugin `dependencies` resolved against the declaring plugin's own marketplace) |
-| Verified against | **media-mcp 0.3.5**, **Nólë v1.10.2+dgx.20260828.24** |
+| Verified against | **media-mcp**（以 [`plugins/vagaa-media/skills/EXPORTED-FROM`](../vagaa-media/skills/EXPORTED-FROM) 为准，工具面与个数以 `capabilities` / `presets_list` 实时结果为准）、**Nólë v1.10.2+dgx.20260828.24** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash |
 | Runtime dependencies | `bash`, `curl`, `python3` — from the two plugins it pulls in |
 
@@ -42,6 +50,8 @@ The media token and the web-evidence credential are unrelated secrets, and withi
 
 ## Update
 
+### Claude Code (CC)
+
 ```
 /plugin marketplace update claude-kit
 /plugin update vagaa-dgx
@@ -49,6 +59,10 @@ The media token and the web-evidence credential are unrelated secrets, and withi
 
 Updating the bundle does not update its dependencies; update those by name, or update the
 marketplace and let `/plugin` offer both.
+
+### sema
+
+从同一插件市场 `clayboby/claude-kit` 刷新市场并更新 `vagaa-dgx` 及其依赖插件（具体 sema 更新命令本仓未记录，**未核**）。
 
 ## License
 

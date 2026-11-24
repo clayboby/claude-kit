@@ -14,16 +14,16 @@ include facts from their verified deployment; the token is `sensitive`, so Claud
 |---|---|
 | Plugin version | **0.4.8** |
 | Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks, skill loading and production MCP calls with hyphen-preserving tool names; minimum supported version not established) |
-| Verified against | **media-mcp 0.7.22** |
+| Verified against | 以 [`skills/EXPORTED-FROM`](skills/EXPORTED-FROM) 为准（各技能 front matter 的 `verified_against` 随导出同步） |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3` (no packages) |
-| Tool surface | media-mcp 0.7.22 serves the **standard** surface only (`/mcp`, 40 tools). `/mcp-compact` is not deployed; use `surface=standard` |
+| Tool surface | Standard surface (`/mcp`); 可用工具与个数以 `capabilities` / `presets_list` 的实时结果为准（`/mcp-compact` 未部署，使用 `surface=standard`） |
 
 ## What you get
 
 | Component | What it does |
 |---|---|
-| MCP server `media` | `video_*`, `image_*`, `music_*`, `workflow_*`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_search` / `asset_get` / `asset_tag`, `storyboard_*`, `presets_list`, `jobs_list` — 40 tools on the standard surface |
+| MCP server `media` | `video_*`, `image_*`, `music_*`, `workflow_*`, `director_*`, `tts`, `translate`, `image_review`, `video_review`, `reverse_prompt`, `assets_*` / `asset_*`, `storyboard_*`, `presets_list`, `capabilities`, `jobs_list` 等 — 实际可用工具与个数以 `capabilities` / `presets_list` 的实时结果为准 |
 | Skill `media-production` | The loop: search the library first, draft cheaply, review with the vision model, render the final on the same seed; speech, translation, the asset library and job recovery |
 | Skill `video-prompting` | Write, rewrite (`prompt_rewrite`), diagnose or A/B a single-clip video prompt — dialogue, on-screen text, references; produces text or a `prompt_id`, never generates by itself |
 | Skill `storyboard-longform` | Multi-shot films: plan, continuity, resume, assembly (`storyboard_*`) |
@@ -36,12 +36,18 @@ include facts from their verified deployment; the token is `sensitive`, so Claud
 
 ## Install
 
+### Claude Code (CC)
+
 ```
 /plugin marketplace add clayboby/claude-kit
 /plugin install vagaa-media@claude-kit
 ```
 
 `/plugin install vagaa-dgx@claude-kit` installs this plugin together with `vagaa-web-evidence`.
+
+### sema
+
+与 CC 共用同一个 GitHub 插件市场 `clayboby/claude-kit`（插件名 `vagaa-media@claude-kit`）；具体 sema 安装命令本仓未记录（**未核**）。
 
 ## Configuration
 
@@ -90,13 +96,28 @@ The session-start probe uses `curl`; MCP connections use Claude Code's runtime. 
 
 ## Update
 
+### Claude Code (CC)
+
+Inside Claude Code:
+
 ```
 /plugin marketplace update claude-kit
 /plugin update vagaa-media
 ```
 
+Or from a terminal:
+
+```bash
+claude plugin marketplace update claude-kit
+claude plugin update vagaa-media@claude-kit
+```
+
 Then `/reload-plugins`, or restart Claude Code. A plugin updated mid-session keeps serving the old
 hooks and MCP connection until it is reloaded. Your configured URL and token survive an update.
+
+### sema
+
+从同一个插件市场 `clayboby/claude-kit` 刷新市场并更新 `vagaa-media`，随后重启或重载插件（具体 sema 更新命令本仓未记录，**未核**）。
 
 ## Develop
 

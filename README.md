@@ -4,6 +4,8 @@ Claude Code plugins and skills maintained by clayboby, published as a plugin mar
 
 ## 一键安装 / One-click install
 
+### Claude Code (CC)
+
 Inside Claude Code (any project):
 
 ```
@@ -37,14 +39,35 @@ instead.
 Then start Claude Code and check: `/mcp` lists `media` as connected, and asking "list the media tools you have" returns
 video / image / music / tts / storyboard / director tools. The session-start hook reports connection or configuration problems and stays silent when its probes pass.
 
+### sema
+
+sema 与 Claude Code 共用 GitHub 上的同一个插件市场 `clayboby/claude-kit`（插件名同为 `vagaa-media@claude-kit`、`vagaa-web-evidence@claude-kit`、`vagaa-dgx@claude-kit`；插件配置环境变量前缀在离线测试中见 `SEMA_PLUGIN_OPTION_*`）。
+具体的 sema CLI / 交互式添加市场与安装命令在本仓现有文档与 `tests/` 中均未记录（**未核**），请以本机 sema 的插件管理命令为准从 `clayboby/claude-kit` 安装并配置同名 `userConfig` 选项。
+
 ### Update
+
+#### Claude Code (CC)
+
+Terminal CLI:
 
 ```bash
 claude plugin marketplace update claude-kit      # refresh the catalog
-claude plugin update vagaa-media@claude-kit      # e.g. 0.3.7 -> 0.3.8; restart Claude Code to apply
+claude plugin update vagaa-media@claude-kit      # e.g. 0.4.7 -> 0.4.8; restart Claude Code to apply
 ```
 
-Skills carry a `verified_against: media-mcp <version>` stamp. Check it against the deployed service when upgrading; the session-start hook checks reachability and authentication, not version drift.
+Or inside Claude Code:
+
+```
+/plugin marketplace update claude-kit
+/plugin update vagaa-media
+/reload-plugins
+```
+
+#### sema
+
+从同一插件市场 `clayboby/claude-kit` 刷新市场目录并更新 `vagaa-media`（具体 sema 更新 / 重载命令本仓未记录，**未核**；更新后重启或重载 sema 使新版本与技能副本生效）。
+
+Skills carry a `verified_against: media-mcp <version>` stamp and `plugins/vagaa-media/skills/EXPORTED-FROM` records the exact export source. Check live tool availability via `capabilities` / `presets_list`; the session-start hook checks reachability and authentication, not version drift.
 
 Each plugin reads its connection endpoint and credentials from `userConfig` at install time. Packaged
 skills include facts from the deployment they were verified against; check the live service before reusing them. Credentials are
@@ -62,7 +85,7 @@ rather than in any settings file you might commit.
 | | |
 |---|---|
 | Verified with Claude Code | **2.1.212** (real plugin loading and production MCP calls; minimum supported version not established). Install and configure flow re-checked from a clean config directory with **2.1.280** (2026-09-24) |
-| Verified against | **media-mcp 0.7.20** (`vagaa-media` 0.3.24: Director rejects unknown/incompatible reference inputs; storyboard resume accepts run ID alone; director character references use ref2va while the older storyboard renderer's ref2v remains disabled; delivery, review and audio capability guidance clarified), **Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
+| Verified against | **media-mcp**: 以 [`plugins/vagaa-media/skills/EXPORTED-FROM`](plugins/vagaa-media/skills/EXPORTED-FROM) 为准（可用工具与个数以 `capabilities` / `presets_list` 的实时结果为准）；**Nólë v1.10.2+dgx.20260828.24** (`vagaa-web-evidence`) |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
 | Runtime dependencies | `bash`, `curl`, `python3`; no packages, no network access beyond your own gateways |
 
