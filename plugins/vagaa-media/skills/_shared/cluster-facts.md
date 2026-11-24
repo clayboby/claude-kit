@@ -39,8 +39,8 @@ and `hidden[{tool, code, why, needs_scope, how_to_get_it}]`, plus a note when th
   therefore keeps flexible jobs off a node holding a LONG job (`fast`/`daily`/`quality`, any clip ≥ 10 s, storyboard / director ≥ 10 s): while
   the PRO 6000 renders a 15 s final, new images and the next video go to a GB10 node. A second SHORT draft stays queued on
   the PRO 6000 (it still finishes first: 65 s vs 110 s on comfy102, a GB10 node); a third, with the PRO's two slots full, goes to a GB10 node.
-- Text/vision lane: `qwen38-flash-next-nvfp4` (two TP2 pairs, behind one router; an older pair
-  stopped 2026-10-24; 512K context, multimodal); planner, reviewer, the H3 rewriter, reverse prompts
+- Text/vision lane: the instance's own text + vision model (chosen by deployment configuration,
+  `MEDIA_MCP_VISION_MODEL`); planner, reviewer, the H3 rewriter, reverse prompts
   and the image rewrite of GB10 jobs use it. `Qwen3.8-27B` (PRO 6000, 262K context, multimodal) is a second text model behind the same
   gateway `/v1` and rewrites the prompts of PRO 6000 jobs. `presets_list.models` is the live list.
 - TTS: Qwen3-TTS-12Hz-1.7B-CustomVoice on the home voice machine, lane `lane-tts-rt` (vLLM-Omni, shared with the home agent; ≈0.4× real time, long text read in ≤150-character chunks two at a time and joined; `lang` sets the reading language: zh/en/ja/ko/de/fr/ru/pt/es/it); translation: Hy-MT2 on the same machine.
