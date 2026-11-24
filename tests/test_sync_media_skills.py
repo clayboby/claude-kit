@@ -290,7 +290,13 @@ class SyncMediaSkillsTests(unittest.TestCase):
             src.write_text(src.read_text(encoding="utf-8") + "\n<!-- change -->\n", encoding="utf-8")
 
             rm_path = kit_repo / "plugins/vagaa-media/README.md"
-            rm_path.write_text(rm_path.read_text(encoding="utf-8").replace("**0.4.8**", "**0.4.7**"), encoding="utf-8")
+            # the mismatch is made from whatever version the repository is on today, never from a literal:
+            # a literal here goes stale on the very next bump and the case silently stops testing anything
+            rm_text = rm_path.read_text(encoding="utf-8")
+            rm_bad, n = re.subn(r"(\|\s*Plugin version\s*\|\s*\*\*)[0-9]+\.[0-9]+\.[0-9]+(\*\*)", r"\g<1>0.0.1\g<2>", rm_text)
+            self.assertEqual(n, 1, "the README has no Plugin version row to break")
+            self.assertNotEqual(rm_bad, rm_text)
+            rm_path.write_text(rm_bad, encoding="utf-8")
             before_diff = _git(kit_repo, "diff").stdout
 
             res = _run_sync(kit_repo, [str(media_repo)], tmpdir=tmpdir)
