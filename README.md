@@ -21,20 +21,20 @@ options** once for each of the two. Until then `/mcp` reports "No MCP servers co
 `/plugin` → **Errors** lists `Plugin option "…" isn't set`. Do not press Enter on that Errors row:
 its "resolve" action uninstalls the plugin instead of opening its options.
 
-Or from a terminal, non-interactive (fills the options in one go; sensitive values use the OS keychain where supported, with a credentials-file fallback):
+Or from a terminal, non-interactive (sensitive values use the OS keychain where supported, with a credentials-file fallback). **把下面引号里的值换成你自己的**（`media.example.com` 为示例保留域名）；令牌请在安装后的 **Configure options** 界面里填写，不要写进命令行：
 
 ```bash
 claude plugin marketplace add clayboby/claude-kit
 claude plugin install vagaa-media@claude-kit \
-  --config media_mcp_url=https://<your-gateway>/mcp \
-  --config media_mcp_token=<bearer token from the gateway console: Tokens → New> \
-  --config surface=standard
+  --config 'media_mcp_url=https://media.example.com/mcp' \
+  --config 'surface=standard'
 claude plugin list          # shows version + enabled
 ```
 
-`--config` puts the value on the command line, where shell history and the process list can see
-it. For the token, prefer leaving that line out and pasting the value into **Configure options**
-instead.
+`--config` puts any value you pass on the command line, where shell history and the process list can
+see it. Keep `media_mcp_token` out of the command line and paste it into `/plugin` → **Installed** →
+*Vagaa Media* → **Configure options** instead (only if a non-interactive script requires it, quote
+the argument such as `--config 'media_mcp_token=REPLACE_WITH_YOUR_TOKEN'`).
 
 Then start Claude Code and check: `/mcp` lists `media` as connected, and asking "list the media tools you have" returns
 video / image / music / tts / storyboard / director tools. The session-start hook reports connection or configuration problems and stays silent when its probes pass.

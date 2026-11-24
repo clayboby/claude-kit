@@ -4,4 +4,5 @@
 ## 导出方升版约定（给媒体仓）
 - 媒体仓每次运行 `tools/export-skills.sh` 重导技能副本到 `plugins/vagaa-media/skills/` 时，`vagaa-media` 的 patch 版本号必须同步升一位（如 `0.4.8` → `0.4.9`），否则已装用户执行更新时可能拿不到新版。
 - 三处版本必须同步修改：`plugins/vagaa-media/.claude-plugin/plugin.json`（`version`）、`.claude-plugin/marketplace.json`（`vagaa-media.version`）、`plugins/vagaa-media/README.md`（Compatibility matrix 的 `Plugin version`）。
-- 期望接口：导出同步后提交前运行 `bash tests/run-offline-tests.sh` 与 `python3 -m unittest discover -s tests` 校验三处版本一致；媒体仓版本戳只落在 `plugins/vagaa-media/skills/EXPORTED-FROM`，说明文档不再写死。
+- 升版与一致校验跑法：导出同步后在仓根运行 `KIT_BASE_REF=origin/main bash tests/run-offline-tests.sh` 与 `KIT_BASE_REF=origin/main python3 -m unittest discover -s tests`（缺省基线 `origin/main`，仅读本地 git 对象不联网；若 `plugins/vagaa-media/skills/` 相对基线有变但版本未升、或三处版本不一致/市场条目重名即红；基线不可用时打印跳过原因并算通过）。
+- 媒体仓版本戳只落在 `plugins/vagaa-media/skills/EXPORTED-FROM`，说明文档不再写死。
