@@ -2,7 +2,7 @@
 - ✅ 09-05 02:25 **v0.2.0 拆分完成并推送**(9 commit dfdf2f4→12f8fca):`vagaa-media` + `vagaa-web-evidence` + 捆绑 `vagaa-dgx`(只声明 `dependencies`,零组件);hooks 改 `hookSpecificOutput.additionalContext`、PostToolUse matcher 锚定四个 fetch 工具、URL 白名单(同源 + `/assets/<id>` 严格形状,11 类恶意 URL 拒绝)、子进程前 unset 令牌;SessionStart 认证探针(JSON-RPC 信封即"可达且已鉴权",401/403 才判鉴权失败);双凭据 profile(lan/public);commands 改仅用户可调;每插件 README 带兼容矩阵。离线测试 45 passed / 0 failed(修了测试桩 `${2:-lan}` 把空值当默认的 bug 与 stub 就绪竞争);`claude plugin validate --strict` 四目标过;gitleaks git+dir 无泄漏;地址/密钥 grep 零命中。主会话核验后改默认面 `surface=standard`(现网只有 `/mcp`,0.5 上 `/mcp-compact` 再翻)。未做:未装用户级;PostToolUse 未对真实网关触发过;设计 §7 客户端契约夹具未建。
 
 ## 导出方升版约定（给媒体仓）
-- 媒体仓每次运行 `tools/export-skills.sh` 重导技能副本到 `plugins/vagaa-media/skills/` 时，`vagaa-media` 的 patch 版本号必须同步升一位（如 `0.4.8` → `0.4.9`），否则已装用户执行更新时可能拿不到新版。
+- 媒体仓重导技能副本到 `plugins/vagaa-media/skills/` 时，用 `tools/sync-media-skills.sh <媒体仓工作树> [--version X]`，它自己按规范化内容（排除 `EXPORTED-FROM`）判要不要同步并升一位 patch（已高于 `HEAD` 则幂等不再连升）。
 - 三处版本必须同步修改：`plugins/vagaa-media/.claude-plugin/plugin.json`（`version`）、`.claude-plugin/marketplace.json`（`vagaa-media.version`）、`plugins/vagaa-media/README.md`（Compatibility matrix 的 `Plugin version`）。
 - 升版与一致校验跑法：导出同步后在仓根运行 `KIT_BASE_REF=origin/main bash tests/run-offline-tests.sh` 与 `KIT_BASE_REF=origin/main python3 -m unittest discover -s tests`（缺省基线 `origin/main`，仅读本地 git 对象不联网；若 `plugins/vagaa-media/skills/` 相对基线有变但版本未升、或三处版本不一致/市场条目重名即红；基线不可用时打印跳过原因并算通过）。
 - 媒体仓版本戳只落在 `plugins/vagaa-media/skills/EXPORTED-FROM`，说明文档不再写死。

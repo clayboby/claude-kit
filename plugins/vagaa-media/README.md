@@ -19,6 +19,8 @@ include facts from their verified deployment; the token is `sensitive`, so Claud
 | Runtime dependencies | `bash`, `curl`, `python3` (no packages) |
 | Tool surface | Standard surface (`/mcp`); 可用工具与个数以 `capabilities` / `presets_list` 的实时结果为准（`/mcp-compact` 未部署，使用 `surface=standard`） |
 
+刷新技能副本请运行仓库根的 `tools/sync-media-skills.sh <媒体仓工作树> [--version X]`（仅内容真变时同步并三处升 patch）；加 `--check` 只检查不改文件，退出码 `1` 表示源比副本新、`0` 表示内容一致。
+
 ## What you get
 
 | Component | What it does |
