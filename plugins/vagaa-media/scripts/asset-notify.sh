@@ -63,23 +63,87 @@ def origin(url):
     return scheme + "://" + host + ":" + port
 
 
-def collect(node, out):
-    if isinstance(node, dict):
-        for key, value in node.items():
-            if key == "asset_url" and isinstance(value, str) and value.strip():
-                out.append(value.strip())
+def parse_json_object(text):
+    """Parse a JSON string only when the entire string is a JSON object."""
+    if not isinstance(text, str):
+        return None
+    s = text.strip()
+    if not s.startswith("{"):
+        return None
+    try:
+        obj = json.loads(s)
+    except (ValueError, TypeError):
+        return None
+    return obj if isinstance(obj, dict) else None
+
+
+def unwrap_mcp_results(tool_response):
+    """Unwrap only known MCP tool_response shapes; never recurse into arbitrary fields."""
+    results = []
+    if isinstance(tool_response, dict):
+        if tool_response.get("isError") is True:
+            return results
+        unwrapped_wrapper = False
+        content = tool_response.get("content")
+        if isinstance(content, list):
+            unwrapped_wrapper = True
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    obj = parse_json_object(block.get("text"))
+                    if obj is not None:
+                        results.append(obj)
+        structured = tool_response.get("structuredContent")
+        if isinstance(structured, dict):
+            unwrapped_wrapper = True
+            results.append(structured)
+        if not unwrapped_wrapper:
+            results.append(tool_response)
+    elif isinstance(tool_response, list):
+        for item in tool_response:
+            if not isinstance(item, dict):
+                continue
+            if item.get("type") == "text" and isinstance(item.get("text"), str):
+                obj = parse_json_object(item.get("text"))
+                if obj is not None:
+                    results.append(obj)
             else:
-                collect(value, out)
-    elif isinstance(node, list):
-        for item in node:
-            collect(item, out)
-    elif isinstance(node, str):
-        text = node.strip()
-        if text[:1] in "{[" and "asset_url" in text:
-            try:
-                collect(json.loads(text), out)
-            except (ValueError, TypeError):
-                pass
+                results.append(item)
+    return results
+
+
+def short_tool_name(tool_name):
+    if not isinstance(tool_name, str) or not tool_name:
+        return ""
+    return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
+
+
+def extract_asset_urls(doc, tool_short):
+    """Extract documented top-level artifact asset_url fields for *_fetch and tts only."""
+    out = []
+    is_tts = tool_short == "tts" or (not tool_short and doc.get("service") == "tts")
+    if is_tts:
+        status = doc.get("status")
+        if status is not None and (not isinstance(status, str) or status.strip().lower() != "completed"):
+            return out
+        if doc.get("done") is False or doc.get("asset_pending") is True:
+            return out
+        val = doc.get("asset_url")
+        if isinstance(val, str) and val.strip():
+            out.append(val.strip())
+        return out
+
+    val = doc.get("asset_url")
+    if isinstance(val, str) and val.strip():
+        out.append(val.strip())
+    for list_key in ("shots", "assets", "items", "artifacts"):
+        entries = doc.get(list_key)
+        if isinstance(entries, list):
+            for entry in entries:
+                if isinstance(entry, dict):
+                    ev = entry.get("asset_url")
+                    if isinstance(ev, str) and ev.strip():
+                        out.append(ev.strip())
+    return out
 
 
 import os
@@ -95,8 +159,10 @@ except (ValueError, TypeError):
 if not isinstance(payload, dict):
     sys.exit(0)
 
+tool_short = short_tool_name(payload.get("tool_name"))
 candidates = []
-collect(payload.get("tool_response"), candidates)
+for doc in unwrap_mcp_results(payload.get("tool_response")):
+    candidates.extend(extract_asset_urls(doc, tool_short))
 
 accepted = []
 seen = set()

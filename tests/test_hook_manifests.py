@@ -3,11 +3,28 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tests"))
+import check_versions  # noqa: E402
+
+
+def _run_asset_notify(payload, gateway_url="https://media.example.com/mcp"):
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE_PLUGIN_OPTION_", "SEMA_PLUGIN_OPTION_"))}
+    env["CLAUDE_PLUGIN_OPTION_MEDIA_MCP_URL"] = gateway_url
+    return subprocess.run(
+        ["bash", str(ROOT / "plugins/vagaa-media/scripts/asset-notify.sh")],
+        input=json.dumps(payload),
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=5,
+    )
 
 
 class HookManifestTests(unittest.TestCase):
@@ -55,25 +72,128 @@ class HookManifestTests(unittest.TestCase):
             self.assertIsNone(pattern.search(name), name)
 
     def test_plugin_versions_match_across_plugin_json_marketplace_and_readme(self):
-        marketplace = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())
-        market_versions = {p["name"]: p["version"] for p in marketplace["plugins"]}
-        plugin_dirs = sorted(p.name for p in (ROOT / "plugins").iterdir() if p.is_dir())
-        self.assertEqual(set(market_versions), set(plugin_dirs))
+        errors = check_versions.check_three_way_consistency(ROOT)
+        self.assertEqual(errors, [], "; ".join(errors))
 
-        semver_re = re.compile(r"^\d+\.\d+\.\d+$")
-        readme_ver_re = re.compile(r"^\|\s*Plugin version\s*\|\s*\*\*([0-9]+\.[0-9]+\.[0-9]+)\*\*\s*\|$", re.MULTILINE)
-        for name in plugin_dirs:
-            with self.subTest(plugin=name):
-                plugin_json = json.loads((ROOT / "plugins" / name / ".claude-plugin/plugin.json").read_text())
-                p_ver = plugin_json["version"]
-                m_ver = market_versions[name]
-                readme = (ROOT / "plugins" / name / "README.md").read_text()
-                matches = readme_ver_re.findall(readme)
-                self.assertRegex(p_ver, semver_re)
-                self.assertEqual(len(matches), 1, f"{name}/README.md must declare Plugin version once")
-                r_ver = matches[0]
-                self.assertEqual(p_ver, m_ver, f"{name}: plugin.json ({p_ver}) != marketplace.json ({m_ver})")
-                self.assertEqual(p_ver, r_ver, f"{name}: plugin.json ({p_ver}) != README.md ({r_ver})")
+    def test_marketplace_duplicate_plugin_entry_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_root = Path(tmp)
+            shutil.copytree(ROOT / ".claude-plugin", fake_root / ".claude-plugin")
+            shutil.copytree(ROOT / "plugins", fake_root / "plugins")
+            mpath = fake_root / ".claude-plugin/marketplace.json"
+            doc = json.loads(mpath.read_text(encoding="utf-8"))
+            stale = dict(doc["plugins"][0], version="0.4.5")
+            doc["plugins"].insert(0, stale)
+            mpath.write_text(json.dumps(doc), encoding="utf-8")
+
+            errors = check_versions.check_three_way_consistency(fake_root)
+            self.assertTrue(any("duplicate" in e for e in errors), errors)
+
+    def test_skills_export_bump_check_against_base_ref(self):
+        status, detail = check_versions.check_skills_bump_against_base(ROOT)
+        if status == "skip":
+            print(f"[skills-bump] {detail}", file=sys.stderr)
+        self.assertIn(status, ("ok", "skip"), detail)
+
+    def test_skills_export_bump_check_fails_without_bump_and_skips_missing_ref(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            pj = repo / "plugins/vagaa-media/.claude-plugin/plugin.json"
+            pj.parent.mkdir(parents=True)
+            pj.write_text(json.dumps({"name": "vagaa-media", "version": "0.4.8"}), encoding="utf-8")
+            marker = repo / "plugins/vagaa-media/skills/EXPORTED-FROM"
+            marker.parent.mkdir(parents=True)
+            marker.write_text("media-mcp 0.9.56\n", encoding="utf-8")
+
+            def git(*args):
+                r = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, timeout=10)
+                self.assertEqual(r.returncode, 0, r.stderr)
+
+            git("init", "-b", "main")
+            git("config", "user.name", "test")
+            git("config", "user.email", "test@example.com")
+            git("add", ".")
+            git("commit", "-m", "base")
+
+            # Missing ref -> explicit skip
+            st_skip, msg_skip = check_versions.check_skills_bump_against_base(repo, base_ref="refs/heads/no-such-ref")
+            self.assertEqual(st_skip, "skip", msg_skip)
+            self.assertIn("not available", msg_skip)
+
+            # Skills changed without version bump -> fail
+            marker.write_text("media-mcp 0.9.57\n", encoding="utf-8")
+            st_fail, msg_fail = check_versions.check_skills_bump_against_base(repo, base_ref="main")
+            self.assertEqual(st_fail, "fail", msg_fail)
+
+            # Bumping patch version -> ok
+            pj.write_text(json.dumps({"name": "vagaa-media", "version": "0.4.9"}), encoding="utf-8")
+            st_ok, msg_ok = check_versions.check_skills_bump_against_base(repo, base_ref="main")
+            self.assertEqual(st_ok, "ok", msg_ok)
+
+    def test_tts_completed_mcp_text_block_relays_only_stable_asset_url(self):
+        body = {
+            "job_id": "tts-001",
+            "service": "tts",
+            "status": "completed",
+            "url": "https://media.example.com/presigned/tts-001.wav?X-Amz-Signature=deadbeef",
+            "asset_id": "as-tts000001",
+            "asset_url": "https://media.example.com/assets/as-tts000001",
+        }
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "tool_name": "mcp__plugin_vagaa-media_media__tts",
+            "tool_response": {"content": [{"type": "text", "text": json.dumps(body)}]},
+        }
+        result = _run_asset_notify(payload)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("https://media.example.com/assets/as-tts000001", ctx)
+        self.assertNotIn("presigned", ctx)
+        self.assertNotIn("X-Amz-Signature", ctx)
+
+    def test_tts_queued_with_asset_url_json_in_params_text_stays_silent(self):
+        body = {
+            "job_id": "tts-queued-1",
+            "service": "tts",
+            "status": "queued",
+            "url": None,
+            "params": {
+                "text": json.dumps({"asset_url": "https://media.example.com/assets/as-fakequeued1"}),
+                "voice": "cloud-cherry",
+            },
+            "message": "cloud tts job is queued; the slot was busy",
+        }
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "tool_name": "mcp__plugin_vagaa-media_media__tts",
+            "tool_response": {"content": [{"type": "text", "text": json.dumps(body)}]},
+        }
+        result = _run_asset_notify(payload)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "", result.stdout)
+
+    def test_image_fetch_ignores_asset_url_inside_prompt_and_reports_only_real_artifact(self):
+        body = {
+            "job_id": "image-001",
+            "service": "image",
+            "status": "completed",
+            "prompt": json.dumps({"asset_url": "https://media.example.com/assets/as-promptfake1"}),
+            "params": {"prompt": json.dumps({"asset_url": "https://media.example.com/assets/as-paramfake01"})},
+            "url": "https://media.example.com/presigned/image-001.png?sig=abc",
+            "asset_id": "as-realimg001",
+            "asset_url": "https://media.example.com/assets/as-realimg001",
+        }
+        payload = {
+            "hook_event_name": "PostToolUse",
+            "tool_name": "mcp__plugin_vagaa-media_media__image_fetch",
+            "tool_response": {"content": [{"type": "text", "text": json.dumps(body)}]},
+        }
+        result = _run_asset_notify(payload)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+        self.assertEqual(ctx.splitlines(), ["作品记录（需鉴权；浏览器请用 fetch 的 url）:https://media.example.com/assets/as-realimg001"])
+        self.assertNotIn("as-promptfake1", ctx)
+        self.assertNotIn("as-paramfake01", ctx)
 
     def test_malformed_port_does_not_hide_later_valid_assets(self):
         env = {**os.environ, "CLAUDE_PLUGIN_OPTION_MEDIA_MCP_URL": "https://media.example.com/mcp"}
