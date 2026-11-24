@@ -11,6 +11,7 @@ OS keychain (or `~/.claude/.credentials.json`) rather than in a settings file yo
 
 | | |
 |---|---|
+| Plugin version | **0.3.9** |
 | Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks and hyphen-preserving MCP tool names; minimum supported version not established). Install, configure and a live call re-checked with **2.1.280** against a per-client gateway key (2026-09-24) |
 | Verified against | **Nólë v1.10.2+dgx.20260828.24** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hook is a bash script |

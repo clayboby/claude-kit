@@ -12,6 +12,7 @@ include facts from their verified deployment; the token is `sensitive`, so Claud
 
 | | |
 |---|---|
+| Plugin version | **0.4.8** |
 | Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks, skill loading and production MCP calls with hyphen-preserving tool names; minimum supported version not established) |
 | Verified against | **media-mcp 0.7.22** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |

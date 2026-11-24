@@ -24,6 +24,7 @@ enabled dependent stays enabled.
 
 | | |
 |---|---|
+| Plugin version | **0.3.6** |
 | Requires Claude Code | **≥ 2.1.259** (plugin `dependencies` resolved against the declaring plugin's own marketplace) |
 | Verified against | **media-mcp 0.3.5**, **Nólë v1.10.2+dgx.20260828.24** |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash |
