@@ -145,7 +145,9 @@ should = [
     "mcp__plugin_vagaa-media_media__storyboard_fetch",
     "mcp__plugin_vagaa-media_media__director_fetch",
     "mcp__plugin_vagaa-media_media__workflow_fetch",
+    "mcp__plugin_vagaa-media_media__tts",
     "mcp__media__video_fetch",
+    "mcp__media__tts",
 ]
 should_not = [
     "xmcp__plugin_vagaa-media_media__video_fetch",
@@ -154,6 +156,8 @@ should_not = [
     "evil_mcp__plugin_vagaa-media_media__video_fetch_evil",
     "mcp__plugin_vagaa-media_media__video_submit",
     "mcp__plugin_vagaa-media_media__jobs_list",
+    "mcp__plugin_vagaa-media_media__tts_extra",
+    "mcp__plugin_vagaa-media_media__embed_batch_fetch",
     "mcp__plugin_other_media__video_fetch",
     "Bash",
 ]
@@ -230,6 +234,40 @@ expect_contains "web-evidence: notes an unset profile" "profile is not set" "$(w
 expect_contains "web-evidence: notes http under the public profile" "should be https" "$(web_pre ok public)"
 leak="$(web_pre 401 | grep -c -e "$SECRET" -e "127.0.0.1")"
 expect_eq "web-evidence: prints neither credential nor URL" "0" "$leak"
+
+# --------------------------------------------------------------------------
+# 4. Version metadata consistency across plugin.json, marketplace.json, README
+# --------------------------------------------------------------------------
+echo
+echo "Plugin version consistency"
+ver_check="$(python3 - "$REPO" <<'PY'
+import json, re, sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+market = {p["name"]: p["version"] for p in json.loads((root / ".claude-plugin/marketplace.json").read_text())["plugins"]}
+dirs = sorted(p.name for p in (root / "plugins").iterdir() if p.is_dir())
+errors = []
+if set(market) != set(dirs):
+    errors.append(f"plugin set mismatch: marketplace={sorted(market)} dirs={dirs}")
+pat = re.compile(r"^\|\s*Plugin version\s*\|\s*\*\*([0-9]+\.[0-9]+\.[0-9]+)\*\*\s*\|$", re.MULTILINE)
+for name in dirs:
+    p_ver = json.loads((root / "plugins" / name / ".claude-plugin/plugin.json").read_text())["version"]
+    m_ver = market.get(name)
+    r_matches = pat.findall((root / "plugins" / name / "README.md").read_text())
+    r_ver = r_matches[0] if len(r_matches) == 1 else f"matches={r_matches}"
+    if not (p_ver == m_ver == r_ver):
+        errors.append(f"{name}: plugin.json={p_ver} marketplace={m_ver} README={r_ver}")
+print("clean" if not errors else "; ".join(errors))
+PY
+)"
+expect_eq "three-way version consistency (plugin.json / marketplace.json / README)" "clean" "$ver_check"
+
+if python3 -m unittest discover -s "$REPO/tests" -p 'test_*.py' >/dev/null 2>&1; then
+  ok "python unittest suite (test_hook_manifests.py)"
+else
+  no "python unittest suite (test_hook_manifests.py)" "exit 0" "non-zero"
+fi
 
 # --------------------------------------------------------------------------
 echo
