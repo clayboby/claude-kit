@@ -259,10 +259,57 @@ else
   no "skills export bump vs ${base_ref}" "ok or skip" "$bump_out"
 fi
 
-if python3 -m unittest discover -s "$REPO/tests" -p 'test_*.py' >/dev/null 2>&1; then
+if python3 -m unittest discover -s "$REPO/tests" -p 'test_hook_manifests.py' >/dev/null 2>&1; then
   ok "python unittest suite (test_hook_manifests.py)"
 else
   no "python unittest suite (test_hook_manifests.py)" "exit 0" "non-zero"
+fi
+
+# --------------------------------------------------------------------------
+# 5. sync-media-skills.sh offline suite
+# --------------------------------------------------------------------------
+echo
+echo "Sync media skills"
+sync_suite_out="$(python3 - "$REPO/tests" <<'PY'
+import sys
+import unittest
+
+suite = unittest.defaultTestLoader.discover(sys.argv[1], pattern="test_sync_media_skills.py")
+
+class _LineResult(unittest.TestResult):
+    def addSuccess(self, test):
+        super().addSuccess(test)
+        print(f"OK\t{test._testMethodName}")
+
+    def addFailure(self, test, err):
+        super().addFailure(test, err)
+        msg = " ".join(str(err[1]).splitlines())
+        print(f"FAIL\t{test._testMethodName}\t{msg}")
+
+    def addError(self, test, err):
+        super().addError(test, err)
+        msg = " ".join(str(err[1]).splitlines())
+        print(f"FAIL\t{test._testMethodName}\t{msg}")
+
+res = _LineResult()
+suite.run(res)
+if res.testsRun == 0:
+    print("FAIL\tdiscovery\tno tests found")
+    sys.exit(1)
+sys.exit(0 if res.wasSuccessful() else 1)
+PY
+)"
+sync_rc=$?
+if [ -z "$sync_suite_out" ]; then
+  no "sync-media-skills test runner" "test output" "empty (rc=$sync_rc)"
+else
+  while IFS=$'\t' read -r status name detail; do
+    if [ "$status" = "OK" ]; then
+      ok "sync-media-skills: $name"
+    else
+      no "sync-media-skills: $name" "pass" "${detail:-failed}"
+    fi
+  done <<< "$sync_suite_out"
 fi
 
 # --------------------------------------------------------------------------
