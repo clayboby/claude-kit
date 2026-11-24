@@ -350,6 +350,117 @@ class SyncMediaSkillsTests(unittest.TestCase):
             self.assertEqual(bad.returncode, 2)
             self.assertIn("usage:", bad.stderr)
 
+    def test_i_resumes_version_bump_when_skills_copied_but_bump_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kit_repo, media_repo, tmpdir = _build_workspace(Path(tmp))
+            old_ver, _, _ = _read_three_versions(kit_repo)
+            expected_new = _bump_patch(old_ver)
+
+            rel = "media-production/SKILL.md"
+            src = media_repo / "skills_fixture" / rel
+            dst = kit_repo / "plugins/vagaa-media/skills" / rel
+            updated = src.read_text(encoding="utf-8") + "\n<!-- interrupted after rsync -->\n"
+            src.write_text(updated, encoding="utf-8")
+            dst.write_text(updated, encoding="utf-8")
+
+            before_diff = _git(kit_repo, "diff").stdout
+
+            # --check on half-finished state must report resumed drift and exit 1 without touching files
+            chk = _run_sync(kit_repo, [str(media_repo), "--check"], tmpdir=tmpdir)
+            self.assertEqual(chk.returncode, 1, chk.stdout + chk.stderr)
+            self.assertIn("resumed", chk.stdout)
+            self.assertEqual(_git(kit_repo, "diff").stdout, before_diff)
+            self.assertEqual(_read_three_versions(kit_repo), (old_ver, old_ver, old_ver))
+
+            # Non-check run must complete the missing three-way version bump
+            res = _run_sync(kit_repo, [str(media_repo)], tmpdir=tmpdir)
+            self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+            self.assertIn("resumed", res.stdout)
+            self.assertIn(f"VERSION_BUMP {old_ver} -> {expected_new}", res.stdout)
+            self.assertEqual(_read_three_versions(kit_repo), (expected_new, expected_new, expected_new))
+
+            cv = subprocess.run(
+                ["python3", str(kit_repo / "tests/check_versions.py"), "all", str(kit_repo), "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            self.assertEqual(cv.returncode, 0, cv.stdout + cv.stderr)
+
+    def test_j_partial_version_bump_after_sync_fails_with_exit_2_without_edits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kit_repo, media_repo, tmpdir = _build_workspace(Path(tmp))
+            old_ver, _, _ = _read_three_versions(kit_repo)
+            next_ver = _bump_patch(old_ver)
+
+            rel = "video-prompting/SKILL.md"
+            src = media_repo / "skills_fixture" / rel
+            dst = kit_repo / "plugins/vagaa-media/skills" / rel
+            updated = src.read_text(encoding="utf-8") + "\n<!-- interrupted after plugin.json -->\n"
+            src.write_text(updated, encoding="utf-8")
+            dst.write_text(updated, encoding="utf-8")
+
+            pj_path = kit_repo / "plugins/vagaa-media/.claude-plugin/plugin.json"
+            pj_path.write_text(
+                pj_path.read_text(encoding="utf-8").replace(f'"{old_ver}"', f'"{next_ver}"', 1),
+                encoding="utf-8",
+            )
+            before_diff = _git(kit_repo, "diff").stdout
+
+            res = _run_sync(kit_repo, [str(media_repo)], tmpdir=tmpdir)
+            self.assertEqual(res.returncode, 2, res.stdout + res.stderr)
+            self.assertEqual(_git(kit_repo, "diff").stdout, before_diff)
+            self.assertEqual(_read_three_versions(kit_repo), (next_ver, old_ver, old_ver))
+
+    def test_k_final_check_versions_failure_rolls_back_clean_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kit_repo, media_repo, tmpdir = _build_workspace(Path(tmp))
+            cv_path = kit_repo / "tests/check_versions.py"
+            cv_path.write_text(
+                "import sys\nprint('stub check_versions failure', file=sys.stderr)\nraise SystemExit(1)\n",
+                encoding="utf-8",
+            )
+            commit_stub = _git(kit_repo, "commit", "-am", "stub failing check_versions")
+            self.assertEqual(commit_stub.returncode, 0, commit_stub.stderr)
+
+            src = media_repo / "skills_fixture/media-production/SKILL.md"
+            src.write_text(src.read_text(encoding="utf-8") + "\n<!-- triggers sync -->\n", encoding="utf-8")
+            new_skill = media_repo / "skills_fixture/new-extra-skill/SKILL.md"
+            new_skill.parent.mkdir(parents=True)
+            new_skill.write_text("---\nname: new-extra-skill\n---\n", encoding="utf-8")
+
+            res = _run_sync(kit_repo, [str(media_repo)], tmpdir=tmpdir)
+            self.assertEqual(res.returncode, 2, res.stdout + res.stderr)
+            self.assertIn("ROLLED_BACK yes", res.stdout)
+            self.assertIn("stub check_versions failure", res.stderr)
+            self.assertEqual(_git(kit_repo, "status", "--porcelain", "--untracked-files=all").stdout.strip(), "")
+
+    def test_l_dirty_skills_dir_at_start_refuses_auto_rollback_on_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kit_repo, media_repo, tmpdir = _build_workspace(Path(tmp))
+            cv_path = kit_repo / "tests/check_versions.py"
+            cv_path.write_text(
+                "import sys\nprint('stub check_versions failure', file=sys.stderr)\nraise SystemExit(1)\n",
+                encoding="utf-8",
+            )
+            commit_stub = _git(kit_repo, "commit", "-am", "stub failing check_versions")
+            self.assertEqual(commit_stub.returncode, 0, commit_stub.stderr)
+
+            # Pre-existing dirty state in skills directory before sync starts
+            pre_dirty = kit_repo / "plugins/vagaa-media/skills/music-and-sfx/SKILL.md"
+            pre_dirty_content = pre_dirty.read_text(encoding="utf-8") + "\n<!-- pre-existing local edit -->\n"
+            pre_dirty.write_text(pre_dirty_content, encoding="utf-8")
+
+            # Source has a different change so sync enters write mode and later hits check_versions failure
+            src = media_repo / "skills_fixture/media-production/SKILL.md"
+            src.write_text(src.read_text(encoding="utf-8") + "\n<!-- triggers sync -->\n", encoding="utf-8")
+
+            res = _run_sync(kit_repo, [str(media_repo)], tmpdir=tmpdir)
+            self.assertEqual(res.returncode, 2, res.stdout + res.stderr)
+            self.assertIn("partial change left in place", res.stderr)
+            self.assertIn("ROLLED_BACK no", res.stdout)
+            self.assertNotEqual(_git(kit_repo, "status", "--porcelain").stdout.strip(), "")
+
 
 if __name__ == "__main__":
     unittest.main()
