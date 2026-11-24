@@ -1,5 +1,5 @@
 {
-  "description": "Checks the media gateway at session start, and relays the stable asset-library URL after every media fetch.",
+  "description": "Checks the media gateway at session start, and relays the stable asset-library URL after every media fetch or tts call.",
   "hooks": {
     "SessionStart": [
       {
@@ -15,7 +15,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "^mcp__(plugin_vagaa-media_media|media)__(video_fetch|image_fetch|music_fetch|storyboard_fetch|director_fetch|workflow_fetch)$",
+        "matcher": "^mcp__(plugin_vagaa-media_media|media)__(video_fetch|image_fetch|music_fetch|storyboard_fetch|director_fetch|workflow_fetch|tts)$",
         "hooks": [
           {
             "type": "command",

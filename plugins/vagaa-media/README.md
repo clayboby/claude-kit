@@ -32,7 +32,7 @@ include facts from their verified deployment; the token is `sensitive`, so Claud
 | `skills/_shared/cluster-facts.md` | The one facts file the five skills point to (nodes, timings, presets, voices, limits, error codes); each skill carries its sha256 |
 | Command `/vagaa-media:media-status` | Recent jobs, what is in flight, what is completed but not fetched. User-invoked only |
 | Hook `SessionStart` | Health probe plus one authenticated `server/discover`, so a bad token, a bad URL and a down service are told apart before you waste a turn |
-| Hook `PostToolUse` | After a media fetch, relays the stable `/assets/<id>` URL into the conversation |
+| Hook `PostToolUse` | After a media fetch or `tts` call, relays the stable `/assets/<id>` (`asset_url`) into the conversation |
 
 ## Install
 
@@ -73,7 +73,7 @@ or any part of the response, writes no file, and always exits 0 — a down gatew
 session. The token reaches curl through a config file on stdin, so it is not visible in `ps`.
 
 **`PostToolUse` → `scripts/asset-notify.sh`,** matcher anchored to
-`^mcp__(plugin_vagaa-media_media|media)__(video_fetch|image_fetch|music_fetch|storyboard_fetch|director_fetch|workflow_fetch)$`. This covers the bundled plugin server and a manually configured server named `media`. A tool
+`^mcp__(plugin_vagaa-media_media|media)__(video_fetch|image_fetch|music_fetch|storyboard_fetch|director_fetch|workflow_fetch|tts)$`. This covers the bundled plugin server and a manually configured server named `media` (including `tts`, which returns `asset_url` synchronously; `embed_batch_fetch` returns vector JSONL rather than a library asset and is intentionally not matched). A tool
 response is remote data, so a URL is relayed only when it is `http`/`https`, has no userinfo, query
 or fragment, shares the **exact** origin (scheme, host and port) of the configured gateway, and has
 a path matching `^/assets/[A-Za-z0-9_-]{6,64}(/.*)?$` with no `.` or `..` segments. Any control

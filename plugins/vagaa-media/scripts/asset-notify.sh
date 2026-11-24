@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# PostToolUse hook for the media *_fetch tools.
+# PostToolUse hook for the media *_fetch and tts tools.
 #
-# Emits the stable asset-library URLs of whatever was just fetched as
-# hookSpecificOutput.additionalContext — a PostToolUse hook's plain stdout does
-# NOT reach the model, only that field does. The transcript then keeps the
-# stable /assets/<id> record rather than treating a 24h presigned link as permanent.
+# Emits the stable asset-library URLs of whatever was just fetched or synthesized
+# as hookSpecificOutput.additionalContext — a PostToolUse hook's plain stdout
+# does NOT reach the model, only that field does. The transcript then keeps the
+# stable /assets/<id> record (asset_url) rather than treating a presigned link
+# (about 1 hour by default) as permanent.
 # The record still needs authorization and is subject to asset retention.
 #
 # A tool response is remote data. Only URLs that are http(s), share the exact
