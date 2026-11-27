@@ -12,7 +12,7 @@ include facts from their verified deployment; the token is `sensitive`, so Claud
 
 | | |
 |---|---|
-| Plugin version | **0.4.9** |
+| Plugin version | **0.4.10** |
 | Verified with Claude Code | **2.1.212** (`userConfig`, exec-form hooks, skill loading and production MCP calls with hyphen-preserving tool names; minimum supported version not established) |
 | Verified against | 以 [`skills/EXPORTED-FROM`](skills/EXPORTED-FROM) 为准（各技能 front matter 的 `verified_against` 随导出同步） |
 | Platforms | **macOS, Linux.** Windows only through WSL or Git Bash — the hooks are bash scripts |
